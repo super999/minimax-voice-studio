@@ -12,7 +12,7 @@ export async function GET() {
 
     const userId = parseInt(session.user.id)
     if (isNaN(userId)) {
-      return NextResponse.json({ error: 'Invalid user ID' }, { status: 401 })
+      return NextResponse.json({ error: 'Invalid user ID' }, { status: 400 })
     }
 
     let preference = await prisma.userPreference.findUnique({
@@ -30,10 +30,17 @@ export async function GET() {
       })
     }
 
-    return NextResponse.json({
-      favoritedVoiceIds: preference.favoritedVoiceIds
+    let favoritedVoiceIds: string[] = []
+    try {
+      favoritedVoiceIds = preference.favoritedVoiceIds
         ? JSON.parse(preference.favoritedVoiceIds)
-        : [],
+        : []
+    } catch {
+      favoritedVoiceIds = []
+    }
+
+    return NextResponse.json({
+      favoritedVoiceIds,
       defaultVoiceId: preference.defaultVoiceId,
     })
   } catch (error) {
@@ -52,11 +59,25 @@ export async function PUT(req: NextRequest) {
 
     const userId = parseInt(session.user.id)
     if (isNaN(userId)) {
-      return NextResponse.json({ error: 'Invalid user ID' }, { status: 401 })
+      return NextResponse.json({ error: 'Invalid user ID' }, { status: 400 })
     }
 
     const body = await req.json()
     const { favoritedVoiceIds, defaultVoiceId } = body
+
+    // Validate favoritedVoiceIds is an array of strings (if provided)
+    if (favoritedVoiceIds !== undefined) {
+      if (!Array.isArray(favoritedVoiceIds) || !favoritedVoiceIds.every((id) => typeof id === 'string')) {
+        return NextResponse.json({ error: 'favoritedVoiceIds must be an array of strings' }, { status: 400 })
+      }
+    }
+
+    // Validate defaultVoiceId is a non-empty string (if provided)
+    if (defaultVoiceId !== undefined) {
+      if (typeof defaultVoiceId !== 'string' || defaultVoiceId.trim() === '') {
+        return NextResponse.json({ error: 'defaultVoiceId must be a non-empty string' }, { status: 400 })
+      }
+    }
 
     const data: any = {}
     if (favoritedVoiceIds !== undefined) {
@@ -76,10 +97,17 @@ export async function PUT(req: NextRequest) {
       update: data,
     })
 
-    return NextResponse.json({
-      favoritedVoiceIds: preference.favoritedVoiceIds
+    let favoritedVoiceIds: string[] = []
+    try {
+      favoritedVoiceIds = preference.favoritedVoiceIds
         ? JSON.parse(preference.favoritedVoiceIds)
-        : [],
+        : []
+    } catch {
+      favoritedVoiceIds = []
+    }
+
+    return NextResponse.json({
+      favoritedVoiceIds,
       defaultVoiceId: preference.defaultVoiceId,
     })
   } catch (error) {
