@@ -27,7 +27,7 @@ export async function POST(request: Request) {
 
     if (existingUser) {
       return NextResponse.json(
-        { error: 'An account with this email already exists' },
+        { error: 'Registration failed. Please try again.' },
         { status: 409 }
       )
     }
