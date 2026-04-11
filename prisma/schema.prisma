@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum VoiceAssetType {
+  tts
+  clone
+  design
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique @db.VarChar(255)
+  passwordHash String?   @map("password_hash") @db.VarChar(255)
+  name         String?   @db.VarChar(100)
+  avatarUrl    String?   @db.VarChar(500)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  voices  VoiceAsset[]
+  apiKeys ApiKey[]
+
+  @@map("users")
+}
+
+model VoiceAsset {
+  id             Int           @id @default(autoincrement())
+  userId         Int
+  name           String        @db.VarChar(100)
+  type           VoiceAssetType
+  voiceId        String?       @db.VarChar(100)
+  audioUrl       String?       @db.VarChar(500)
+  sourceAudioUrl String?       @db.VarChar(500)
+  metadata       Json?
+  createdAt      DateTime      @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("voice_assets")
+}
+
+model ApiKey {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  key         String    @unique @db.VarChar(64)
+  name        String    @db.VarChar(100)
+  usageCount  Int       @default(0)
+  createdAt   DateTime  @default(now())
+  lastUsedAt  DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("api_keys")
+}
