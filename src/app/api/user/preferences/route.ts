@@ -97,17 +97,17 @@ export async function PUT(req: NextRequest) {
       update: data,
     })
 
-    let favoritedVoiceIds: string[] = []
+    let parsedFavoritedVoiceIds: string[] = []
     try {
-      favoritedVoiceIds = preference.favoritedVoiceIds
+      parsedFavoritedVoiceIds = preference.favoritedVoiceIds
         ? JSON.parse(preference.favoritedVoiceIds)
         : []
     } catch {
-      favoritedVoiceIds = []
+      parsedFavoritedVoiceIds = []
     }
 
     return NextResponse.json({
-      favoritedVoiceIds,
+      favoritedVoiceIds: parsedFavoritedVoiceIds,
       defaultVoiceId: preference.defaultVoiceId,
     })
   } catch (error) {
