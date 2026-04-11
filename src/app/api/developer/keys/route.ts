@@ -22,7 +22,6 @@ export async function GET() {
       select: {
         id: true,
         name: true,
-        key: true,
         usageCount: true,
         createdAt: true,
         lastUsedAt: true,
