@@ -136,9 +136,11 @@ export async function deleteClonedVoice(voiceId: string): Promise<void> {
     throw new Error(`MiniMax delete voice error: ${response.status} ${error}`)
   }
 
-  const data = await response.json()
-
-  if (data.base_resp && data.base_resp.status_code !== 0) {
-    throw new Error(`MiniMax delete error: ${data.base_resp.status_msg}`)
+  const text = await response.text()
+  if (text) {
+    const data = JSON.parse(text)
+    if (data.base_resp && data.base_resp.status_code !== 0) {
+      throw new Error(`MiniMax delete error: ${data.base_resp.status_msg}`)
+    }
   }
 }
