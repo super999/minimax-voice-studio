@@ -25,6 +25,7 @@ model User {
   voices  VoiceAsset[]
   apiKeys ApiKey[]
   userPreference UserPreference?
+  clonedVoices ClonedVoice[]
 
   @@map("users")
 }
@@ -72,4 +73,19 @@ model UserPreference {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_preferences")
+}
+
+model ClonedVoice {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  voiceId     String   @unique @map("voice_id") @db.VarChar(256)
+  name        String   @default("") @db.VarChar(100)
+  fileId      String?  @map("file_id") @db.VarChar(128)
+  sourceUrl   String?  @map("source_url") @db.VarChar(500)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("cloned_voices")
 }
