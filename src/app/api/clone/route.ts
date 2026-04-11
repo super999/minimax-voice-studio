@@ -18,6 +18,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'audioUrl is required' }, { status: 400 })
     }
 
+    // Validate URL scheme - only allow https://
+    try {
+      const urlObj = new URL(audioUrl.trim())
+      if (urlObj.protocol !== 'https:') {
+        return NextResponse.json({ error: 'Only HTTPS URLs are allowed' }, { status: 400 })
+      }
+    } catch {
+      return NextResponse.json({ error: 'Invalid URL format' }, { status: 400 })
+    }
+
+    // URL length limit (reasonable max)
+    if (audioUrl.trim().length > 2048) {
+      return NextResponse.json({ error: 'URL exceeds maximum allowed length' }, { status: 400 })
+    }
+
     if (!name || typeof name !== 'string' || name.trim() === '') {
       return NextResponse.json({ error: 'name is required' }, { status: 400 })
     }
@@ -27,9 +42,14 @@ export async function POST(request: NextRequest) {
       name: name.trim(),
     })
 
+    const userId = parseInt(session.user.id)
+    if (isNaN(userId)) {
+      return NextResponse.json({ error: 'Invalid user ID' }, { status: 401 })
+    }
+
     const voiceAsset = await prisma.voiceAsset.create({
       data: {
-        userId: parseInt(session.user.id),
+        userId,
         name: name.trim(),
         type: 'clone',
         voiceId: result.voiceId,

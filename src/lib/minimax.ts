@@ -22,7 +22,7 @@ export async function generateTTS({
   text,
   voiceId,
   speed = 1.0,
-}: GenerateTTSOptions): Promise<ArrayBuffer> {
+}: GenerateTTSOptions): Promise<{ arrayBuffer: ArrayBuffer; contentType: string; contentLength: number }> {
   const response = await fetch(`${MINIMAX_API_HOST}/v1/t2a_v2`, {
     method: 'POST',
     headers: {
@@ -49,7 +49,11 @@ export async function generateTTS({
     throw new Error(`MiniMax TTS API error: ${response.status} ${error}`)
   }
 
-  return response.arrayBuffer()
+  const arrayBuffer = await response.arrayBuffer()
+  const contentType = response.headers.get('Content-Type') || ''
+  const contentLength = parseInt(response.headers.get('Content-Length') || '0', 10)
+
+  return { arrayBuffer, contentType, contentLength }
 }
 
 export async function cloneVoice({

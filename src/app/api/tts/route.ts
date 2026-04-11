@@ -4,6 +4,9 @@ import { prisma } from '@/lib/prisma'
 import { generateTTS } from '@/lib/minimax'
 import { promises as fs } from 'fs'
 import path from 'path'
+import { v4 as uuidv4 } from 'uuid'
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,23 +27,38 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'voiceId is required' }, { status: 400 })
     }
 
-    const audioBuffer = await generateTTS({
+    const { arrayBuffer, contentType, contentLength } = await generateTTS({
       text: text.trim(),
       voiceId,
       speed: speed ? Number(speed) : undefined,
     })
 
-    const filename = `tts_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.mp3`
+    // Validate Content-Type is audio
+    if (!contentType.includes('audio') && !contentType.includes('mpeg') && !contentType.includes('mp3')) {
+      throw new Error('Invalid response: expected audio content type')
+    }
+
+    // Validate file size (max 10MB)
+    if (contentLength > MAX_FILE_SIZE) {
+      throw new Error(`File size ${contentLength} exceeds maximum allowed size of ${MAX_FILE_SIZE}`)
+    }
+
+    const filename = `tts_${uuidv4()}.mp3`
     const audioDir = path.join(process.cwd(), 'public', 'audio')
     const filepath = path.join(audioDir, filename)
 
-    await fs.writeFile(filepath, Buffer.from(audioBuffer))
+    await fs.writeFile(filepath, Buffer.from(arrayBuffer))
 
     const audioUrl = `/audio/${filename}`
 
+    const userId = parseInt(session.user.id)
+    if (isNaN(userId)) {
+      return NextResponse.json({ error: 'Invalid user ID' }, { status: 401 })
+    }
+
     const voiceAsset = await prisma.voiceAsset.create({
       data: {
-        userId: parseInt(session.user.id),
+        userId,
         name: `TTS ${new Date().toISOString()}`,
         type: 'tts',
         voiceId,
