@@ -8,6 +8,7 @@ const navLinks = [
   { href: '/tts', label: 'TTS 合成' },
   { href: '/clone', label: '声音克隆' },
   { href: '/voices', label: '我的声音' },
+  { href: '/settings', label: '偏好设置' },
   { href: '/developer', label: '开发者中心' },
 ]
 
