@@ -151,16 +151,12 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Count existing cloned voices to generate auto name
-    const existingCount = await prisma.clonedVoice.count({ where: { userId } })
-    const autoName = `克隆音色 ${existingCount + 1}`
-
     // Save to ClonedVoice table
     const clonedVoice = await prisma.clonedVoice.create({
       data: {
         userId,
         voiceId,
-        name: autoName,
+        name: name.trim(),
         sourceUrl: audioUrl?.trim() || null,
       },
     })
@@ -169,7 +165,7 @@ export async function POST(request: NextRequest) {
     await prisma.voiceAsset.create({
       data: {
         userId,
-        name: autoName,
+        name: name.trim(),
         type: 'clone',
         voiceId,
         sourceAudioUrl: audioUrl?.trim() || null,
@@ -179,7 +175,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       id: clonedVoice.id,
       voiceId,
-      name: autoName,
+      name: name.trim(),
     })
   } catch (error) {
     console.error('Clone API error:', error)
