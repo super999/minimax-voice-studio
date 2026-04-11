@@ -22,7 +22,7 @@ export async function generateTTS({
   text,
   voiceId,
   speed = 1.0,
-}: GenerateTTSOptions): Promise<{ arrayBuffer: ArrayBuffer; contentType: string; contentLength: number }> {
+}: GenerateTTSOptions): Promise<{ audioHex: string }> {
   const response = await fetch(`${MINIMAX_API_HOST}/v1/t2a_v2`, {
     method: 'POST',
     headers: {
@@ -30,17 +30,22 @@ export async function generateTTS({
       Authorization: `Bearer ${MINIMAX_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'speech-02-hd',
+      model: 'speech-2.8-hd',
       text,
       voice_setting: {
         voice_id: voiceId,
         speed,
+        vol: 1.0,
+        pitch: 0,
       },
       audio_setting: {
         sample_rate: 32000,
         bitrate: 128000,
         format: 'mp3',
+        channel: 1,
       },
+      stream: false,
+      output_format: 'hex',
     }),
   })
 
@@ -49,11 +54,19 @@ export async function generateTTS({
     throw new Error(`MiniMax TTS API error: ${response.status} ${error}`)
   }
 
-  const arrayBuffer = await response.arrayBuffer()
-  const contentType = response.headers.get('Content-Type') || ''
-  const contentLength = parseInt(response.headers.get('Content-Length') || '0', 10)
+  const data = await response.json()
 
-  return { arrayBuffer, contentType, contentLength }
+  // Check for API-level errors
+  if (data.base_resp && data.base_resp.status_code !== 0) {
+    throw new Error(`MiniMax API error: ${data.base_resp.status_msg}`)
+  }
+
+  const audioHex = data.data?.audio
+  if (!audioHex) {
+    throw new Error('No audio data returned from MiniMax API')
+  }
+
+  return { audioHex }
 }
 
 export async function cloneVoice({

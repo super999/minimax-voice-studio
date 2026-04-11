@@ -27,27 +27,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'voiceId is required' }, { status: 400 })
     }
 
-    const { arrayBuffer, contentType, contentLength } = await generateTTS({
+    const { audioHex } = await generateTTS({
       text: text.trim(),
       voiceId,
       speed: speed ? Number(speed) : undefined,
     })
 
-    // Validate Content-Type is audio
-    if (!contentType.includes('audio') && !contentType.includes('mpeg') && !contentType.includes('mp3')) {
-      throw new Error('Invalid response: expected audio content type')
+    // Validate audio data exists
+    if (!audioHex || audioHex.length === 0) {
+      throw new Error('No audio data returned from MiniMax API')
     }
 
+    // Convert hex to binary buffer
+    const audioBuffer = Buffer.from(audioHex, 'hex')
+
     // Validate file size (max 10MB)
-    if (contentLength > MAX_FILE_SIZE) {
-      throw new Error(`File size ${contentLength} exceeds maximum allowed size of ${MAX_FILE_SIZE}`)
+    if (audioBuffer.length > MAX_FILE_SIZE) {
+      throw new Error(`File size ${audioBuffer.length} exceeds maximum allowed size of ${MAX_FILE_SIZE}`)
     }
 
     const filename = `tts_${uuidv4()}.mp3`
     const audioDir = path.join(process.cwd(), 'public', 'audio')
     const filepath = path.join(audioDir, filename)
 
-    await fs.writeFile(filepath, Buffer.from(arrayBuffer))
+    await fs.writeFile(filepath, audioBuffer)
 
     const audioUrl = `/audio/${filename}`
 
