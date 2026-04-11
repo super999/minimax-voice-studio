@@ -10,18 +10,39 @@ interface AudioPlayerProps {
 
 export function AudioPlayer({ src, onClose }: AudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false)
+  const [progress, setProgress] = useState(0)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const endedHandlerRef = useRef<() => void>()
+  const errorHandlerRef = useRef<() => void>()
+  const timeupdateHandlerRef = useRef<() => void>()
 
   useEffect(() => {
     audioRef.current = new Audio(src)
-    audioRef.current.addEventListener('ended', () => setIsPlaying(false))
-    audioRef.current.addEventListener('error', () => setIsPlaying(false))
+
+    endedHandlerRef.current = () => setIsPlaying(false)
+    errorHandlerRef.current = () => setIsPlaying(false)
+    timeupdateHandlerRef.current = () => {
+      if (audioRef.current && audioRef.current.duration) {
+        setProgress((audioRef.current.currentTime / audioRef.current.duration) * 100)
+      }
+    }
+
+    audioRef.current.addEventListener('ended', endedHandlerRef.current)
+    audioRef.current.addEventListener('error', errorHandlerRef.current)
+    audioRef.current.addEventListener('timeupdate', timeupdateHandlerRef.current)
 
     return () => {
       if (audioRef.current) {
         audioRef.current.pause()
-        audioRef.current.removeEventListener('ended', () => setIsPlaying(false))
-        audioRef.current.removeEventListener('error', () => setIsPlaying(false))
+        if (endedHandlerRef.current) {
+          audioRef.current.removeEventListener('ended', endedHandlerRef.current)
+        }
+        if (errorHandlerRef.current) {
+          audioRef.current.removeEventListener('error', errorHandlerRef.current)
+        }
+        if (timeupdateHandlerRef.current) {
+          audioRef.current.removeEventListener('timeupdate', timeupdateHandlerRef.current)
+        }
       }
     }
   }, [src])
@@ -52,7 +73,7 @@ export function AudioPlayer({ src, onClose }: AudioPlayerProps) {
       <div className="w-32 h-1 bg-gray-200 rounded-full overflow-hidden">
         <div
           className="h-full bg-blue-600 rounded-full transition-all duration-100"
-          style={{ width: isPlaying ? '60%' : '0%' }}
+          style={{ width: `${progress}%` }}
         />
       </div>
       <button

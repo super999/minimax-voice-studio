@@ -4,18 +4,7 @@ import { useState } from 'react'
 import useSWR from 'swr'
 import { VoiceCard } from '@/components/VoiceCard'
 import { AudioPlayer } from '@/components/AudioPlayer'
-
-interface VoiceAsset {
-  id: number
-  userId: number
-  name: string
-  type: 'tts' | 'clone' | 'design'
-  voiceId: string | null
-  audioUrl: string | null
-  sourceAudioUrl: string | null
-  metadata: Json | null
-  createdAt: string
-}
+import { VoiceAsset } from '@/types'
 
 const fetcher = (url: string) => fetch(url).then((res) => {
   if (!res.ok) {

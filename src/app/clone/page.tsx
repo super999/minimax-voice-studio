@@ -13,7 +13,7 @@ export default function ClonePage() {
   const [audioUrl, setAudioUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<boolean>(false)
+  const [success, setSuccess] = useState<CloneResult | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,7 +34,7 @@ export default function ClonePage() {
         throw new Error(data.error || 'Failed to clone voice')
       }
 
-      setSuccess(true)
+      setSuccess(data)
       setName('')
       setAudioUrl('')
     } catch (err) {
@@ -96,7 +96,7 @@ export default function ClonePage() {
 
           {success && (
             <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">
-              声音克隆成功！您可以在「我的声音」页面查看和管理克隆的声音。
+              声音克隆成功！voiceId: {success.voiceId}。您可以在「我的声音」页面查看和管理克隆的声音。
             </div>
           )}
 

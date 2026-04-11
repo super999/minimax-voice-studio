@@ -1,18 +1,7 @@
 'use client'
 
 import { Play, Trash2 } from 'lucide-react'
-
-interface VoiceAsset {
-  id: number
-  userId: number
-  name: string
-  type: 'tts' | 'clone' | 'design'
-  voiceId: string | null
-  audioUrl: string | null
-  sourceAudioUrl: string | null
-  metadata: Json | null
-  createdAt: string
-}
+import { VoiceAsset } from '@/types'
 
 interface VoiceCardProps {
   voice: VoiceAsset
