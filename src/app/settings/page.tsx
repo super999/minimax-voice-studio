@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Header } from '@/components/Header'
 import useSWR from 'swr'
 import { VOICE_GROUPS, DEFAULT_VOICE_IDS, getVoiceDisplayName } from '@/config/voices'
@@ -12,6 +12,7 @@ export default function SettingsPage() {
   const { data, mutate } = useSWR('/api/user/preferences', fetcher)
   const [activeLanguage, setActiveLanguage] = useState('Mandarin')
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const favoritedIds: string[] = data?.favoritedVoiceIds || []
   const defaultVoiceId: string = data?.defaultVoiceId || 'female-shaonv'
@@ -27,24 +28,36 @@ export default function SettingsPage() {
     }
 
     setSaving(true)
-    await fetch('/api/user/preferences', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ favoritedVoiceIds: newFavorites }),
-    })
-    await mutate()
-    setSaving(false)
+    setError(null)
+    try {
+      await fetch('/api/user/preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ favoritedVoiceIds: newFavorites }),
+      })
+      await mutate()
+    } catch {
+      setError('保存失败，请重试')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const setDefault = async (id: string) => {
     setSaving(true)
-    await fetch('/api/user/preferences', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ defaultVoiceId: id }),
-    })
-    await mutate()
-    setSaving(false)
+    setError(null)
+    try {
+      await fetch('/api/user/preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ defaultVoiceId: id }),
+      })
+      await mutate()
+    } catch {
+      setError('保存失败，请重试')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const currentGroup = VOICE_GROUPS.find(g => g.language === activeLanguage)
@@ -55,6 +68,12 @@ export default function SettingsPage() {
       <Header />
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <h1 className="text-2xl font-bold mb-6">音色偏好设置</h1>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+            {error}
+          </div>
+        )}
 
         {/* Default Voice */}
         <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
