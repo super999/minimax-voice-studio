@@ -112,6 +112,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Validate promptText requires promptAudioFile
+    if (promptText && !promptAudioFile) {
+      return NextResponse.json(
+        { error: 'promptText requires promptAudioFile to be provided' },
+        { status: 400 }
+      )
+    }
+
     // Generate unique voice_id for this clone
     const voiceId = generateCloneVoiceId()
 
