@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Header } from '@/components/Header'
 import { AudioPlayer } from '@/components/AudioPlayer'
 import useSWR from 'swr'
@@ -9,7 +9,6 @@ import { DEFAULT_VOICES, getVoiceDisplayName } from '@/config/voices'
 const fetcher = (url: string) => fetch(url).then(res => res.json())
 
 interface TTSResult {
-  id: number
   audioUrl: string
 }
 
@@ -21,7 +20,6 @@ export default function TTSPage() {
   const [speed, setSpeed] = useState(1.0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [result, setResult] = useState<TTSResult | null>(null)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
 
   // Set default voice from preferences
@@ -32,7 +30,7 @@ export default function TTSPage() {
   }, [prefs])
 
   // Get available voices: favorited + default
-  const availableVoices = (() => {
+  const availableVoices = useMemo(() => {
     const favorited: string[] = prefs?.favoritedVoiceIds || []
     const defaultIds = DEFAULT_VOICES.map(v => v.id)
 
@@ -45,13 +43,12 @@ export default function TTSPage() {
         ? `${getVoiceDisplayName(id)} ⭐`
         : `${getVoiceDisplayName(id)} ☆`,
     }))
-  })()
+  }, [prefs])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
-    setResult(null)
 
     try {
       const res = await fetch('/api/tts', {
@@ -62,7 +59,6 @@ export default function TTSPage() {
 
       const data = await res.json()
       if (res.ok) {
-        setResult(data)
         setAudioUrl(data.audioUrl)
       } else {
         setError(data.error || 'TTS 生成失败')
