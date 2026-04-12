@@ -1,0 +1,26 @@
+[2026-04-12T01:58:18.105Z] [DEBUG] Clone request: fileId=386660005752945, voiceId=clone_mnv46y9iygpxie, clonePrompt=undefined
+[2026-04-12T01:58:18.106Z] [DEBUG] MiniMax voice_clone body: {"file_id":386660005752945,"voice_id":"clone_mnv46y9iygpxie"}
+[2026-04-12T01:58:18.245Z] [ERROR] Clone API: MiniMax clone error: insufficient balance
+Error: MiniMax clone error: insufficient balance
+    at cloneVoice (webpack-internal:///(rsc)/./src/lib/minimax-upload.ts:75:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async POST (webpack-internal:///(rsc)/./src/app/api/clone/route.ts:198:9)
+    at async D:\claude-code-work\minimax-voice-studio\.worktrees\impl-minimax-voice\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:57228
+    at async eT.execute (D:\claude-code-work\minimax-voice-studio\.worktrees\impl-minimax-voice\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:46851)
+    at async eT.handle (D:\claude-code-work\minimax-voice-studio\.worktrees\impl-minimax-voice\node_modules\next\dist\compiled\next-server\app-route.runtime.dev.js:6:58760)
+    at async doRender (D:\claude-code-work\minimax-voice-studio\.worktrees\impl-minimax-voice\node_modules\next\dist\server\base-server.js:1366:42)
+    at async cacheEntry.responseCache.get.routeKind (D:\claude-code-work\minimax-voice-studio\.worktrees\impl-minimax-voice\node_modules\next\dist\server\base-server.js:1588:28)
+    at async DevServer.renderToResponseWithComponentsImpl (D:\claude-code-work\minimax-voice-studio\.worktrees\impl-minimax-voice\node_modules\next\dist\server\base-server.js:1496:28)
+    at async DevServer.renderPageComponent (D:\claude-code-work\minimax-voice-studio\.worktrees\impl-minimax-voice\node_modules\next\dist\server\base-server.js:1924:24)
+    at async DevServer.renderToResponseImpl (D:\claude-code-work\minimax-voice-studio\.worktrees\impl-minimax-voice\node_modules\next\dist\server\base-server.js:1962:32)
+    at async DevServer.pipeImpl (D:\claude-code-work\minimax-voice-studio\.worktrees\impl-minimax-voice\node_modules\next\dist\server\base-server.js:922:25)
+    at async NextNodeServer.handleCatchallRenderRequest (D:\claude-code-work\minimax-voice-studio\.worktrees\impl-minimax-voice\node_modules\next\dist\server\next-server.js:272:17)
+    at async DevServer.handleRequestImpl (D:\claude-code-work\minimax-voice-studio\.worktrees\impl-minimax-voice\node_modules\next\dist\server\base-server.js:818:17)
+    at async D:\claude-code-work\minimax-voice-studio\.worktrees\impl-minimax-voice\node_modules\next\dist\server\dev\next-dev-server.js:339:20
+    at async Span.traceAsyncFn (D:\claude-code-work\minimax-voice-studio\.worktrees\impl-minimax-voice\node_modules\next\dist\trace\trace.js:154:20)
+    at async DevServer.handleRequest (D:\claude-code-work\minimax-voice-studio\.worktrees\impl-minimax-voice\node_modules\next\dist\server\dev\next-dev-server.js:336:24)
+    at async invokeRender (D:\claude-code-work\minimax-voice-studio\.worktrees\impl-minimax-voice\node_modules\next\dist\server\lib\router-server.js:179:21)
+    at async handleRequest (D:\claude-code-work\minimax-voice-studio\.worktrees\impl-minimax-voice\node_modules\next\dist\server\lib\router-server.js:359:24)
+    at async requestHandlerImpl (D:\claude-code-work\minimax-voice-studio\.worktrees\impl-minimax-voice\node_modules\next\dist\server\lib\router-server.js:383:13)
+    at async Server.requestListener (D:\claude-code-work\minimax-voice-studio\.worktrees\impl-minimax-voice\node_modules\next\dist\server\lib\start-server.js:141:13)
+[2026-04-12T08:28:43.367Z] [Voice Refresh] Got 0 voices from MiniMax

@@ -4,7 +4,6 @@ import { useState, useEffect, useMemo } from 'react'
 import { Header } from '@/components/Header'
 import { AudioPlayer } from '@/components/AudioPlayer'
 import useSWR from 'swr'
-import { DEFAULT_VOICES, getVoiceDisplayName } from '@/config/voices'
 
 const fetcher = (url: string) => fetch(url).then(res => res.json())
 
@@ -12,8 +11,21 @@ interface TTSResult {
   audioUrl: string
 }
 
+interface VoiceGroup {
+  language: string
+  voices: Voice[]
+}
+
+interface Voice {
+  id: string
+  name: string
+  language: string
+  category?: string
+}
+
 export default function TTSPage() {
   const { data: prefs } = useSWR('/api/user/preferences', fetcher)
+  const { data: voiceData } = useSWR('/api/voices-config', fetcher)
   const [name, setName] = useState('')
   const [text, setText] = useState('')
   const [voiceId, setVoiceId] = useState('female-shaonv')
@@ -22,17 +34,36 @@ export default function TTSPage() {
   const [error, setError] = useState<string | null>(null)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
 
+  const voiceGroups: VoiceGroup[] = voiceData?.voices || []
+
+  // Flatten all voices for selector
+  const allVoices = useMemo(() => {
+    const voices: Voice[] = []
+    for (const group of voiceGroups) {
+      for (const voice of group.voices) {
+        voices.push(voice)
+      }
+    }
+    return voices
+  }, [voiceGroups])
+
+  // Get display name for a voice ID
+  const getVoiceDisplayName = (id: string) => {
+    const voice = allVoices.find(v => v.id === id)
+    return voice ? `${voice.name} (${voice.language})` : id
+  }
+
   // Set default voice from preferences
   useEffect(() => {
-    if (prefs?.defaultVoiceId) {
+    if (prefs?.defaultVoiceId && allVoices.length > 0) {
       setVoiceId(prefs.defaultVoiceId)
     }
-  }, [prefs])
+  }, [prefs, allVoices])
 
-  // Get available voices: favorited + default
+  // Get available voices: favorited + defaults
   const availableVoices = useMemo(() => {
     const favorited: string[] = prefs?.favoritedVoiceIds || []
-    const defaultIds = DEFAULT_VOICES.map(v => v.id)
+    const defaultIds = ['female-shaonv', 'male-qn-jingying', 'female-tianmei']
 
     // Combine favorited + defaults, remove duplicates
     const all = [...new Set([...favorited, ...defaultIds])]
@@ -43,7 +74,7 @@ export default function TTSPage() {
         ? `${getVoiceDisplayName(id)} ⭐`
         : `${getVoiceDisplayName(id)} ☆`,
     }))
-  }, [prefs])
+  }, [prefs, getVoiceDisplayName])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
