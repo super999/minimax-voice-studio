@@ -24,6 +24,26 @@ export default function SettingsPage() {
   const [deletingId, setDeletingId] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [refreshingVoices, setRefreshingVoices] = useState(false)
+  const [voiceSyncInfo, setVoiceSyncInfo] = useState<{officialCount?: number, error?: string} | null>(null)
+
+  const handleRefreshVoices = async () => {
+    setRefreshingVoices(true)
+    setVoiceSyncInfo(null)
+    try {
+      const res = await fetch('/api/admin/refresh-voices')
+      const data = await res.json()
+      if (res.ok) {
+        setVoiceSyncInfo({ officialCount: data.officialCount })
+      } else {
+        setVoiceSyncInfo({ error: data.error || '刷新失败' })
+      }
+    } catch {
+      setVoiceSyncInfo({ error: '网络错误' })
+    } finally {
+      setRefreshingVoices(false)
+    }
+  }
 
   const favoritedIds: string[] = data?.favoritedVoiceIds || []
   const defaultVoiceId: string = data?.defaultVoiceId || 'female-shaonv'
@@ -216,7 +236,24 @@ export default function SettingsPage() {
 
             {/* Voice Browser */}
             <div className="bg-white rounded-xl shadow-sm p-6">
-              <h2 className="text-lg font-medium mb-4">浏览所有音色</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-medium">浏览所有音色</h2>
+                <button
+                  onClick={handleRefreshVoices}
+                  disabled={refreshingVoices}
+                  className="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg disabled:opacity-50"
+                >
+                  {refreshingVoices ? '刷新中...' : '🔄 同步官方音色'}
+                </button>
+              </div>
+
+              {voiceSyncInfo && (
+                <div className={`text-sm mb-4 px-3 py-2 rounded-lg ${
+                  voiceSyncInfo.error ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'
+                }`}>
+                  {voiceSyncInfo.error || `官方音色数量: ${voiceSyncInfo.officialCount}`}
+                </div>
+              )}
 
               {/* Language Tabs */}
               <div className="flex flex-wrap gap-2 mb-6">
