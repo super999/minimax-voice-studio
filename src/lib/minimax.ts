@@ -110,6 +110,9 @@ export async function listVoices(): Promise<Voice[]> {
   }
 
   const data = await response.json()
-  console.log('[MiniMax get_voice response]', JSON.stringify(data).slice(0, 500))
-  return data.voices || []
+  return (data.system_voice || data.voices || []).map((v: { voice_id: string; voice_name?: string; description?: string }) => ({
+    voice_id: v.voice_id,
+    name: v.voice_name || v.voice_id,
+    description: Array.isArray(v.description) ? v.description.join('') : v.description,
+  }))
 }
