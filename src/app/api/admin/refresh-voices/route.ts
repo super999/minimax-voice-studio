@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { listVoices } from '@/lib/minimax'
 import { logToFile } from '@/lib/logger'
+import { promises as fs } from 'fs'
+import path from 'path'
 
 export async function GET() {
   try {
@@ -11,7 +13,12 @@ export async function GET() {
     }
 
     const officialVoices = await listVoices()
-    await logToFile(`[Voice Refresh] Got ${officialVoices.length} voices from MiniMax`)
+
+    // Write to data/voices.json
+    const dataPath = path.join(process.cwd(), 'data', 'voices.json')
+    await fs.writeFile(dataPath, JSON.stringify(officialVoices, null, 2), 'utf-8')
+
+    await logToFile(`[Voice Refresh] Saved ${officialVoices.length} voices to data/voices.json`)
 
     return NextResponse.json({
       success: true,
