@@ -1,5 +1,6 @@
 const MINIMAX_API_HOST = process.env.MINIMAX_API_HOST!
 const MINIMAX_API_KEY = process.env.MINIMAX_API_KEY!
+import { logToFile } from './logger'
 
 interface UploadFileOptions {
   file: Buffer
@@ -80,7 +81,7 @@ export async function cloneVoice({
     voice_id: voiceId,
   }
 
-  console.log('[DEBUG] MiniMax voice_clone body:', JSON.stringify(body, null, 2))
+  await logToFile('[DEBUG] MiniMax voice_clone body: ' + JSON.stringify(body))
 
   if (clonePrompt) {
     body.clone_prompt = {

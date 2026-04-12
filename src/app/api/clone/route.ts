@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { uploadFile, cloneVoice } from '@/lib/minimax-upload'
+import { logToFile, logError } from '@/lib/logger'
 
 const MAX_AUDIO_SIZE = 20 * 1024 * 1024 // 20MB
 const VALID_EXTENSIONS = ['.mp3', '.m4a', '.wav']
@@ -160,6 +161,7 @@ export async function POST(request: NextRequest) {
       audioFile: audioFile ? { name: audioFile.name, size: audioFile.size } : 'URL',
       promptAudioFile: promptAudioFile ? { name: promptAudioFile.name, size: promptAudioFile.size } : null,
     })
+    await logToFile(`[DEBUG] Clone request: fileId=${audioFileId}, voiceId=${voiceId}, clonePrompt=${JSON.stringify(clonePrompt)}`)
 
     // Call MiniMax voice_clone API
     await cloneVoice({
@@ -195,7 +197,7 @@ export async function POST(request: NextRequest) {
       name: name.trim(),
     })
   } catch (error) {
-    console.error('Clone API error:', error)
+    await logError('Clone API', error)
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
