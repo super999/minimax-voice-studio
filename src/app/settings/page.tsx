@@ -5,6 +5,7 @@ import { Header } from '@/components/Header'
 import useSWR from 'swr'
 import { VOICE_GROUPS, DEFAULT_VOICE_IDS, getVoiceDisplayName } from '@/config/voices'
 import { Star } from 'lucide-react'
+import { filterValidVoiceIds } from '@/lib/voice-validator'
 
 const fetcher = (url: string) => fetch(url).then(res => res.json())
 
@@ -37,13 +38,16 @@ export default function SettingsPage() {
       newFavorites = [...favoritedIds, id]
     }
 
+    // 过滤掉无效音色后再保存
+    const validFavorites = filterValidVoiceIds(newFavorites)
+
     setSaving(true)
     setError(null)
     try {
       await fetch('/api/user/preferences', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ favoritedVoiceIds: newFavorites }),
+        body: JSON.stringify({ favoritedVoiceIds: validFavorites }),
       })
       await mutate()
     } catch (err) {
@@ -55,6 +59,16 @@ export default function SettingsPage() {
   }
 
   const setDefault = async (id: string) => {
+    // 检查是否为有效音色
+    if (!isFavorited(id)) {
+      // 如果不是已收藏的音色，检查是否是有效音色
+      const { isValidVoiceId } = await import('@/lib/voice-validator')
+      if (!isValidVoiceId(id)) {
+        setError('该音色已不可用，请重新选择')
+        return
+      }
+    }
+
     setSaving(true)
     setError(null)
     try {
@@ -90,7 +104,7 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <main className="container mx-auto px-4 py-8 max-w-4xl">
+      <main className="max-w-4xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-6">音色偏好设置</h1>
 
         {/* Tab Navigation */}
