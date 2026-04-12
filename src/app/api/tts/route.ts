@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
         type: 'tts',
         voiceId,
         audioUrl,
-        metadata: { speed },
+        metadata: { speed, text: text.trim().slice(0, 200) },
       },
     })
 
