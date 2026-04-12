@@ -95,11 +95,13 @@ export async function cloneVoice({
 }
 
 export async function listVoices(): Promise<Voice[]> {
-  const response = await fetch(`${MINIMAX_API_HOST}/v1/voices`, {
-    method: 'GET',
+  const response = await fetch(`${MINIMAX_API_HOST}/v1/get_voice`, {
+    method: 'POST',
     headers: {
+      'Content-Type': 'application/json',
       Authorization: `Bearer ${MINIMAX_API_KEY}`,
     },
+    body: JSON.stringify({ voice_type: 'system' }),
   })
 
   if (!response.ok) {
