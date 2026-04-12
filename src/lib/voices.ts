@@ -4,11 +4,11 @@ import { VOICE_GROUPS, type Voice, type VoiceGroup } from '@/config/voices'
 
 const DATA_VOICES_PATH = path.join(process.cwd(), 'data', 'voices.json')
 
-interface DataVoice {
+export interface DataVoice {
   voice_id: string
-  name: string
-  language?: string
-  category?: string
+  voice_name: string
+  description: string[]
+  created_time: string
 }
 
 /**
@@ -28,28 +28,47 @@ async function getDataVoices(): Promise<DataVoice[]> {
 }
 
 /**
+ * 根据 voice_id 的前缀获取分组名称
+ * 例如: "male-qn-qingse" -> "male"
+ *        "female-shaonv" -> "female"
+ *        "Chinese_Mandarin" -> "Chinese"
+ */
+function getGroupFromVoiceId(voiceId: string): string {
+  const underscoreIndex = voiceId.indexOf('_')
+  if (underscoreIndex > 0) {
+    return voiceId.substring(0, underscoreIndex)
+  }
+  return 'Default'
+}
+
+/**
  * 将 DataVoice 格式转换为 VoiceGroup 格式
  */
 function convertToVoiceGroups(dataVoices: DataVoice[]): VoiceGroup[] {
   const languageMap = new Map<string, Voice[]>()
 
   for (const v of dataVoices) {
-    const language = v.language || 'Other'
-    if (!languageMap.has(language)) {
-      languageMap.set(language, [])
+    const group = getGroupFromVoiceId(v.voice_id)
+    if (!languageMap.has(group)) {
+      languageMap.set(group, [])
     }
-    languageMap.get(language)!.push({
+    languageMap.get(group)!.push({
       id: v.voice_id,
-      name: v.name,
-      language: v.language || 'Other',
-      category: v.category || 'Official',
-    })
+      name: v.voice_name,
+      language: group,
+      category: v.description?.join('') || '',
+      // 额外字段用于显示
+      description: v.description,
+      created_time: v.created_time,
+    } as Voice & { description: string[]; created_time: string })
   }
 
-  return Array.from(languageMap.entries()).map(([language, voices]) => ({
-    language,
-    voices,
-  }))
+  return Array.from(languageMap.entries())
+    .map(([language, voices]) => ({
+      language,
+      voices,
+    }))
+    .sort((a, b) => a.language.localeCompare(b.language))
 }
 
 /**

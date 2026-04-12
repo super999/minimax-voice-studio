@@ -13,6 +13,8 @@ interface Voice {
   name: string
   language?: string
   category?: string
+  description?: string[]
+  created_time?: string
 }
 
 interface VoiceGroup {
@@ -298,15 +300,15 @@ export default function SettingsPage() {
               </div>
 
               {/* Voice Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {currentVoices.map(voice => (
                   <div
                     key={voice.id}
-                    className={`p-3 border rounded-lg ${
+                    className={`p-4 border rounded-lg ${
                       isFavorited(voice.id) ? 'border-yellow-500 bg-yellow-50' : ''
                     }`}
                   >
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-start justify-between mb-2">
                       <button
                         className="p-1 hover:bg-gray-100 rounded"
                         onClick={() => toggleFavorite(voice.id)}
@@ -320,11 +322,17 @@ export default function SettingsPage() {
                         />
                       </button>
                       {defaultVoiceId === voice.id && (
-                        <span className="text-xs text-primary">默认</span>
+                        <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">默认</span>
                       )}
                     </div>
-                    <p className="text-sm font-medium">{voice.name}</p>
-                    <p className="text-xs text-gray-500">{voice.category}</p>
+                    <p className="text-sm font-semibold text-gray-900 mb-1">{voice.name}</p>
+                    <p className="text-xs font-mono text-gray-500 mb-1 break-all">{voice.id}</p>
+                    {voice.description && voice.description.length > 0 && (
+                      <p className="text-xs text-gray-600 mb-1 line-clamp-2">{voice.description.join('')}</p>
+                    )}
+                    {voice.created_time && voice.created_time !== '1970-01-01' && (
+                      <p className="text-xs text-gray-400">创建: {voice.created_time}</p>
+                    )}
                   </div>
                 ))}
               </div>
