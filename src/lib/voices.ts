@@ -59,12 +59,16 @@ function convertToVoiceGroups(dataVoices: DataVoice[]): ExtendedVoiceGroup[] {
     if (!languageMap.has(group)) {
       languageMap.set(group, [])
     }
+    // 确保 description 是字符串
+    const descStr = Array.isArray(v.description)
+      ? v.description.join('')
+      : (typeof v.description === 'string' ? v.description : '')
     languageMap.get(group)!.push({
       id: v.voice_id,
       name: v.voice_name,
       language: group,
-      category: v.description?.join('') || '',
-      description: v.description,
+      category: descStr,
+      description: Array.isArray(v.description) ? v.description : [],
       created_time: v.created_time,
     })
   }
