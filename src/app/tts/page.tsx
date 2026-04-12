@@ -72,7 +72,7 @@ export default function TTSPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <main className="container mx-auto px-4 py-8 max-w-2xl">
+      <main className="max-w-2xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-6">文本转语音 (TTS)</h1>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-6 space-y-6">

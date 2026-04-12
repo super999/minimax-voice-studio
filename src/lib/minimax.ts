@@ -110,5 +110,6 @@ export async function listVoices(): Promise<Voice[]> {
   }
 
   const data = await response.json()
+  console.log('[MiniMax get_voice response]', JSON.stringify(data).slice(0, 500))
   return data.voices || []
 }
