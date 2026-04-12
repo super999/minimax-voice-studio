@@ -75,12 +75,42 @@ export async function POST(request: NextRequest) {
       })
       audioFileId = uploadResult.fileId
     } else {
-      // Use URL — validate
+      // Download URL content, then upload to MiniMax
       const urlStr = audioUrl!.trim()
       if (!urlStr.startsWith('https://')) {
         return NextResponse.json({ error: 'Only HTTPS URLs are allowed' }, { status: 400 })
       }
-      audioFileId = urlStr // Will use audio_url approach
+
+      // Download the file from URL
+      let urlResponse: Response
+      try {
+        urlResponse = await fetch(urlStr)
+      } catch {
+        return NextResponse.json({ error: 'Failed to download audio from URL' }, { status: 400 })
+      }
+
+      if (!urlResponse.ok) {
+        return NextResponse.json({ error: 'Failed to download audio from URL' }, { status: 400 })
+      }
+
+      const contentType = urlResponse.headers.get('content-type') || ''
+      let filename = 'audio'
+      if (contentType.includes('wav')) filename = 'audio.wav'
+      else if (contentType.includes('mp3') || contentType.includes('mpeg')) filename = 'audio.mp3'
+      else if (contentType.includes('m4a') || contentType.includes('mp4')) filename = 'audio.m4a'
+
+      const urlBuffer = Buffer.from(await urlResponse.arrayBuffer())
+
+      if (urlBuffer.length > MAX_AUDIO_SIZE) {
+        return NextResponse.json({ error: 'File too large. Maximum size is 20MB' }, { status: 400 })
+      }
+
+      const uploadResult = await uploadFile({
+        file: urlBuffer,
+        filename,
+        purpose: 'voice_clone',
+      })
+      audioFileId = uploadResult.fileId
     }
 
     // Optional: prompt audio
@@ -124,40 +154,11 @@ export async function POST(request: NextRequest) {
     const voiceId = generateCloneVoiceId()
 
     // Call MiniMax voice_clone API
-    // If audioFileId is a URL (audio_url), use URL-based cloning
-    if (audioFileId.startsWith('http')) {
-      const response = await fetch(
-        `${process.env.MINIMAX_API_HOST}/v1/voice_clone`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${process.env.MINIMAX_API_KEY}`,
-          },
-          body: JSON.stringify({
-            audio_url: audioFileId,
-            voice_id: voiceId,
-            clone_prompt: clonePrompt
-              ? {
-                  prompt_audio_file_id: clonePrompt.promptAudioFileId,
-                  prompt_text: clonePrompt.promptText,
-                }
-              : undefined,
-          }),
-        }
-      )
-
-      if (!response.ok) {
-        const error = await response.text()
-        throw new Error(`MiniMax voice clone error: ${response.status} ${error}`)
-      }
-    } else {
-      await cloneVoice({
-        fileId: audioFileId,
-        voiceId,
-        clonePrompt,
-      })
-    }
+    await cloneVoice({
+      fileId: audioFileId,
+      voiceId,
+      clonePrompt,
+    })
 
     // Save to ClonedVoice table
     const clonedVoice = await prisma.clonedVoice.create({
