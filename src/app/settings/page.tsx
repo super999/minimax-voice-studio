@@ -3,11 +3,22 @@
 import { useState } from 'react'
 import { Header } from '@/components/Header'
 import useSWR from 'swr'
-import { VOICE_GROUPS, DEFAULT_VOICE_IDS, getVoiceDisplayName } from '@/config/voices'
 import { Star } from 'lucide-react'
 import { filterValidVoiceIds } from '@/lib/voice-validator'
 
 const fetcher = (url: string) => fetch(url).then(res => res.json())
+
+interface Voice {
+  id: string
+  name: string
+  language?: string
+  category?: string
+}
+
+interface VoiceGroup {
+  language: string
+  voices: Voice[]
+}
 
 interface ClonedVoice {
   id: number
@@ -19,6 +30,7 @@ interface ClonedVoice {
 export default function SettingsPage() {
   const { data, mutate } = useSWR('/api/user/preferences', fetcher)
   const { data: clonedVoicesData, mutate: mutateCloned } = useSWR('/api/user/cloned-voices', fetcher)
+  const { data: voiceData } = useSWR<{ voices: VoiceGroup[] }>('/api/voices-config', fetcher)
   const [activeLanguage, setActiveLanguage] = useState('Mandarin')
   const [activeTab, setActiveTab] = useState<'favorites' | 'cloned'>('favorites')
   const [deletingId, setDeletingId] = useState<number | null>(null)
@@ -26,6 +38,19 @@ export default function SettingsPage() {
   const [error, setError] = useState<string | null>(null)
   const [refreshingVoices, setRefreshingVoices] = useState(false)
   const [voiceSyncInfo, setVoiceSyncInfo] = useState<{officialCount?: number, error?: string} | null>(null)
+
+  const voiceGroups: VoiceGroup[] = voiceData?.voices || []
+
+  // Get display name for a voice ID from the fetched data
+  const getVoiceDisplayName = (id: string) => {
+    for (const group of voiceGroups) {
+      const voice = group.voices.find(v => v.id === id)
+      if (voice) return `${voice.name} (${voice.language || 'Unknown'})`
+    }
+    return id
+  }
+
+  const DEFAULT_VOICE_IDS = ['female-shaonv', 'male-qn-jingying', 'female-tianmei']
 
   const handleRefreshVoices = async () => {
     setRefreshingVoices(true)
@@ -118,7 +143,7 @@ export default function SettingsPage() {
     }
   }
 
-  const currentGroup = VOICE_GROUPS.find(g => g.language === activeLanguage)
+  const currentGroup = voiceGroups.find(g => g.language === activeLanguage)
   const currentVoices = currentGroup?.voices || []
 
   return (
@@ -257,7 +282,7 @@ export default function SettingsPage() {
 
               {/* Language Tabs */}
               <div className="flex flex-wrap gap-2 mb-6">
-                {VOICE_GROUPS.map(group => (
+                {voiceGroups.map(group => (
                   <button
                     key={group.language}
                     className={`px-3 py-1 rounded-lg text-sm ${
