@@ -8,6 +8,13 @@ import { Star } from 'lucide-react'
 
 const fetcher = (url: string) => fetch(url).then(res => res.json())
 
+interface ClonedVoice {
+  id: number
+  voiceId: string
+  name: string
+  createdAt: string
+}
+
 export default function SettingsPage() {
   const { data, mutate } = useSWR('/api/user/preferences', fetcher)
   const { data: clonedVoicesData, mutate: mutateCloned } = useSWR('/api/user/cloned-voices', fetcher)
@@ -39,7 +46,8 @@ export default function SettingsPage() {
         body: JSON.stringify({ favoritedVoiceIds: newFavorites }),
       })
       await mutate()
-    } catch {
+    } catch (err) {
+      console.error('Toggle favorite error:', err)
       setError('保存失败，请重试')
     } finally {
       setSaving(false)
@@ -56,7 +64,8 @@ export default function SettingsPage() {
         body: JSON.stringify({ defaultVoiceId: id }),
       })
       await mutate()
-    } catch {
+    } catch (err) {
+      console.error('Set default voice error:', err)
       setError('保存失败，请重试')
     } finally {
       setSaving(false)
@@ -64,13 +73,12 @@ export default function SettingsPage() {
   }
 
   const handleDeleteClonedVoice = async (id: number) => {
-    if (!confirm('确定要删除这个克隆音色吗？')) return
     setDeletingId(id)
     try {
       await fetch(`/api/user/cloned-voices/${id}`, { method: 'DELETE' })
       await mutateCloned()
-    } catch {
-      alert('删除失败')
+    } catch (err) {
+      console.error('Delete cloned voice error:', err)
     } finally {
       setDeletingId(null)
     }
@@ -258,7 +266,7 @@ export default function SettingsPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {clonedVoicesData.clonedVoices.map((voice: any) => (
+                {clonedVoicesData.clonedVoices.map((voice: ClonedVoice) => (
                   <div key={voice.id} className="flex items-center justify-between p-4 border rounded-lg bg-amber-50 border-amber-100">
                     <div className="flex items-center gap-3">
                       <span className="text-xl">🎙️</span>
