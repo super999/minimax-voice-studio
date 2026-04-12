@@ -153,6 +153,14 @@ export async function POST(request: NextRequest) {
     // Generate unique voice_id for this clone
     const voiceId = generateCloneVoiceId()
 
+    console.log('[DEBUG] Clone request:', {
+      fileId: audioFileId,
+      voiceId,
+      clonePrompt,
+      audioFile: audioFile ? { name: audioFile.name, size: audioFile.size } : 'URL',
+      promptAudioFile: promptAudioFile ? { name: promptAudioFile.name, size: promptAudioFile.size } : null,
+    })
+
     // Call MiniMax voice_clone API
     await cloneVoice({
       fileId: audioFileId,

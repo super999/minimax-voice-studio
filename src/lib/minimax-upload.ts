@@ -8,7 +8,7 @@ interface UploadFileOptions {
 }
 
 interface UploadFileResult {
-  fileId: string
+  fileId: number
   bytes: number
   createdAt: number
   filename: string
@@ -49,7 +49,7 @@ export async function uploadFile({
   }
 
   return {
-    fileId: String(data.file.file_id),
+    fileId: data.file.file_id, // Keep as number (MiniMax returns int64)
     bytes: data.file.bytes,
     createdAt: data.file.created_at,
     filename: data.file.filename,
@@ -58,15 +58,12 @@ export async function uploadFile({
 }
 
 interface CloneVoiceOptions {
-  fileId: string
+  fileId: number
   voiceId: string
   clonePrompt?: {
     promptAudioFileId: string
     promptText: string
   }
-  model?: string
-  needNoiseReduction?: boolean
-  needVolumeNormalization?: boolean
 }
 
 /**
@@ -77,17 +74,13 @@ export async function cloneVoice({
   fileId,
   voiceId,
   clonePrompt,
-  model = 'speech-2.8-hd',
-  needNoiseReduction = false,
-  needVolumeNormalization = false,
 }: CloneVoiceOptions): Promise<{ demoAudio?: string }> {
   const body: Record<string, unknown> = {
     file_id: fileId,
     voice_id: voiceId,
-    model,
-    need_noise_reduction: needNoiseReduction,
-    need_volume_normalization: needVolumeNormalization,
   }
+
+  console.log('[DEBUG] MiniMax voice_clone body:', JSON.stringify(body, null, 2))
 
   if (clonePrompt) {
     body.clone_prompt = {
