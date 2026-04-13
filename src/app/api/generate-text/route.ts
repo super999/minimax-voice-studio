@@ -10,13 +10,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { prompt, model } = await request.json()
+    const { prompt, model, useEmotionTags } = await request.json()
 
     if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
     }
 
-    const generatedText = await generateText(prompt.trim(), model)
+    const generatedText = await generateText(prompt.trim(), model, useEmotionTags)
 
     return NextResponse.json({ text: generatedText })
   } catch (error) {

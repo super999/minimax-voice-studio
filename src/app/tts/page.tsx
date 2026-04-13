@@ -61,6 +61,7 @@ export default function TTSPage() {
   const [generatePrompt, setGeneratePrompt] = useState('')
   const [generating, setGenerating] = useState(false)
   const [selectedModel, setSelectedModel] = useState('MiniMax-M2.7')
+  const [useEmotionTags, setUseEmotionTags] = useState(false)
 
   const handleCopy = async (id: number, textToCopy: string) => {
     try {
@@ -90,7 +91,7 @@ export default function TTSPage() {
       const res = await fetch('/api/generate-text', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: generatePrompt, model: selectedModel }),
+        body: JSON.stringify({ prompt: generatePrompt, model: selectedModel, useEmotionTags }),
       })
 
       const data = await res.json()
@@ -181,7 +182,7 @@ export default function TTSPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <main className="max-w-2xl mx-auto px-4 py-8">
+      <main className="max-w-5xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-6">文本转语音 (TTS)</h1>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-6 space-y-6">
@@ -219,8 +220,32 @@ export default function TTSPage() {
                 <p className="text-amber-600">💡 文本超过 3000 字符，建议等待较长时间</p>
               )}
               <p>📝 段落换行：直接使用换行符</p>
-              <p>⏸️ 添加停顿：插入 &lt;#秒数#&gt; 标记（如 &lt;#1.5#&gt; 表示 1.5 秒停顿）</p>
+              <p>⏸️ 停顿控制：使用 &lt;#x#&gt; 标记，x 为秒数（范围 0.01~99.99，最多2位小数），插入两个文本之间，不能连续使用多个停顿标记</p>
               <p>⚠️ 不可见字符占比不能超过 10%</p>
+              <details className="mt-2">
+                <summary className="cursor-pointer text-purple-600 font-medium">语气词标签（勾选"使用语气词标签"后 AI 生成会包含）</summary>
+                <div className="mt-2 p-2 bg-gray-50 rounded text-gray-600 grid grid-cols-2 gap-1">
+                  <span>(laughs) - 笑声</span>
+                  <span>(chuckle) - 轻笑</span>
+                  <span>(coughs) - 咳嗽</span>
+                  <span>(clear-throat) - 清嗓子</span>
+                  <span>(groans) - 呻吟</span>
+                  <span>(breath) - 正常换气</span>
+                  <span>(pant) - 喘气</span>
+                  <span>(inhale) - 吸气</span>
+                  <span>(exhale) - 呼气</span>
+                  <span>(gasps) - 倒吸气</span>
+                  <span>(sniffs) - 吸鼻子</span>
+                  <span>(sighs) - 叹气</span>
+                  <span>(snorts) - 喷鼻息</span>
+                  <span>(burps) - 打嗝</span>
+                  <span>(lip-smacking) - 咂嘴</span>
+                  <span>(humming) - 哼唱</span>
+                  <span>(hissing) - 嘶嘶声</span>
+                  <span>(emm) - 嗯</span>
+                  <span>(sneezes) - 喷嚏</span>
+                </div>
+              </details>
             </div>
           </div>
 
@@ -344,14 +369,25 @@ export default function TTSPage() {
         <div className="mt-6 bg-white rounded-xl shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-medium">AI 辅助生成</h2>
-            <select
-              value={selectedModel}
-              onChange={e => setSelectedModel(e.target.value)}
-              className="px-3 py-1.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-            >
-              <option value="MiniMax-M2.7">MiniMax-M2.7</option>
-              <option value="MiniMax-M2.5">MiniMax-M2.5</option>
-            </select>
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-2 text-sm text-gray-600">
+                <input
+                  type="checkbox"
+                  checked={useEmotionTags}
+                  onChange={e => setUseEmotionTags(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 text-purple-500 focus:ring-purple-500"
+                />
+                使用语气词标签
+              </label>
+              <select
+                value={selectedModel}
+                onChange={e => setSelectedModel(e.target.value)}
+                className="px-3 py-1.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="MiniMax-M2.7">MiniMax-M2.7</option>
+                <option value="MiniMax-M2.5">MiniMax-M2.5</option>
+              </select>
+            </div>
           </div>
           <div className="flex gap-2">
             <input

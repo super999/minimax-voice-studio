@@ -21,7 +21,39 @@ interface Voice {
 /**
  * Generate text using MiniMax AI model
  */
-export async function generateText(prompt: string, model: string = 'MiniMax-M2.7'): Promise<string> {
+export async function generateText(prompt: string, model: string = 'MiniMax-M2.7', useEmotionTags: boolean = false): Promise<string> {
+  const emotionTagsInstruction = useEmotionTags
+    ? `6. 在适当的位置插入语气词标签增加自然感，可用的标签有：
+   - (laughs) 笑声 - 大笑时使用
+   - (chuckle) 轻笑 - 微笑或轻笑时使用
+   - (coughs) 咳嗽 - 咳嗽时使用
+   - (clear-throat) 清嗓子 - 清嗓时使用
+   - (groans) 呻吟 - 痛苦时使用
+   - (breath) 正常换气 - 自然呼吸时使用
+   - (pant) 喘气 - 跑步或累了时使用
+   - (inhale) 吸气 - 深吸气时使用
+   - (exhale) 呼气 - 呼气时使用
+   - (gasps) 倒吸气 - 惊讶时使用
+   - (sniffs) 吸鼻子 - 吸鼻时使用
+   - (sighs) 叹气 - 叹气时使用
+   - (snorts) 喷鼻息 - 哼鼻子时使用
+   - (burps) 打嗝 - 打嗝时使用
+   - (lip-smacking) 咂嘴 - 咂嘴时使用
+   - (humming) 哼唱 - 哼歌时使用
+   - (hissing) 嘶嘶声 - 害怕时使用
+   - (emm) 嗯 - 思考或犹豫时使用
+   - (sneezes) 喷嚏 - 打喷嚏时使用
+7. 语气词标签使用要自然，每段话最多2-3个，不要过多`
+    : ''
+
+  const systemPrompt = `你是一个专业的语音脚本撰写助手。请根据用户的主题，生成一段适合文字转语音（TTS）的文本。生成的文本应该：
+1. 语言自然流畅，口语化
+2. 长度适中（100-300字）
+3. 内容完整，有明确的主题
+4. 不包含特殊格式或代码
+5. 直接返回文本内容，不要加引号或前缀说明
+${emotionTagsInstruction}`
+
   const response = await fetch(`${MINIMAX_API_HOST}/v1/text/chatcompletion_v2`, {
     method: 'POST',
     headers: {
@@ -34,7 +66,7 @@ export async function generateText(prompt: string, model: string = 'MiniMax-M2.7
         {
           role: 'system',
           name: 'MiniMax AI',
-          content: '你是一个专业的语音脚本撰写助手。请根据用户的主题，生成一段适合文字转语音（TTS）的文本。生成的文本应该：\n1. 语言自然流畅，口语化\n2. 长度适中（100-300字）\n3. 内容完整，有明确的主题\n4. 不包含特殊格式或代码\n5. 直接返回文本内容，不要加引号或前缀说明',
+          content: systemPrompt,
         },
         {
           role: 'user',
