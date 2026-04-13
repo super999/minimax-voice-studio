@@ -28,7 +28,7 @@ export async function uploadFile({
 }: UploadFileOptions): Promise<UploadFileResult> {
   const formData = new FormData()
   formData.append('purpose', purpose)
-  formData.append('file', new Blob([file], { type: 'audio/mpeg' }), filename)
+  formData.append('file', new Blob([file as unknown as BlobPart], { type: 'audio/mpeg' }), filename)
 
   const response = await fetch(`${MINIMAX_API_HOST}/v1/files/upload`, {
     method: 'POST',

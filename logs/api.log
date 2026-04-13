@@ -4,3 +4,6 @@
 [2026-04-12T08:43:57.317Z] [Voice Refresh] Saved 303 voices to data/voices.json
 [2026-04-12T08:44:20.338Z] [Voice Refresh] Saved 303 voices to data/voices.json
 [2026-04-12T08:53:14.558Z] [Voice Refresh] Saved 303 voices to data/voices.json
+[2026-04-12T10:48:58.578Z] [Voice Refresh] Error: Dynamic server usage: Route /api/admin/refresh-voices couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+[2026-04-12T13:25:42.109Z] [Voice Refresh] Error: Dynamic server usage: Route /api/admin/refresh-voices couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+[2026-04-13T00:42:13.046Z] [Voice Refresh] Error: Dynamic server usage: Route /api/admin/refresh-voices couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error

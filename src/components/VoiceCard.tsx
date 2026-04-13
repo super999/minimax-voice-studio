@@ -104,7 +104,7 @@ export function VoiceCard({ voice, onPlay, onDelete }: VoiceCardProps) {
       {/* Text Preview */}
       {textPreview && (
         <div className="mb-3 p-2 bg-gray-50 rounded-lg text-xs text-gray-600 line-clamp-2">
-          💬 {textPreview}{textContent.length > 50 ? '...' : ''}
+          💬 {textPreview}{textPreview.length === 50 ? '...' : ''}
         </div>
       )}
 

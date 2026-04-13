@@ -6,9 +6,9 @@ const DATA_VOICES_PATH = path.join(process.cwd(), 'data', 'voices.json')
 
 export interface DataVoice {
   voice_id: string
-  voice_name: string
-  description: string[]
-  created_time: string
+  name: string
+  description: string | string[]
+  created_time?: string
 }
 
 export interface ExtendedVoice extends Voice {
@@ -63,13 +63,17 @@ function convertToVoiceGroups(dataVoices: DataVoice[]): ExtendedVoiceGroup[] {
     const descStr = Array.isArray(v.description)
       ? v.description.join('')
       : (typeof v.description === 'string' ? v.description : '')
+    // description 也要保留为数组格式用于展示
+    const descArr = Array.isArray(v.description)
+      ? v.description
+      : (typeof v.description === 'string' ? [v.description] : [])
     languageMap.get(group)!.push({
       id: v.voice_id,
-      name: v.voice_name,
+      name: v.name || v.voice_id,
       language: group,
       category: descStr,
-      description: Array.isArray(v.description) ? v.description : [],
-      created_time: v.created_time,
+      description: descArr,
+      created_time: v.created_time || '1970-01-01',
     })
   }
 
@@ -89,7 +93,29 @@ function convertToVoiceGroups(dataVoices: DataVoice[]): ExtendedVoiceGroup[] {
 export async function getVoices(): Promise<ExtendedVoiceGroup[]> {
   const dataVoices = await getDataVoices()
   if (dataVoices.length > 0) {
+    // 更新缓存
+    voiceIdCache = new Set(dataVoices.map(v => v.voice_id))
     return convertToVoiceGroups(dataVoices)
   }
-  return VOICE_GROUPS as ExtendedVoiceGroup[]
+  // Fallback: 从硬编码配置加载时也更新缓存
+  const fallbackVoices = VOICE_GROUPS as ExtendedVoiceGroup[]
+  voiceIdCache = new Set(fallbackVoices.flatMap(g => g.voices.map(v => v.id)))
+  return fallbackVoices
+}
+
+// 缓存 voice ID 集合，用于快速验证
+let voiceIdCache: Set<string> = new Set()
+
+/**
+ * 检查 voiceId 是否为有效音色（存在于动态配置中）
+ */
+export function isValidVoiceId(voiceId: string): boolean {
+  return voiceIdCache.has(voiceId)
+}
+
+/**
+ * 获取有效的 voiceId 列表
+ */
+export function getValidVoiceIds(): string[] {
+  return Array.from(voiceIdCache)
 }

@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    let audioFileId: string
+    let audioFileId: number
 
     if (audioFile) {
       // Upload local file to MiniMax
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
         purpose: 'prompt_audio',
       })
       clonePrompt = {
-        promptAudioFileId: uploadResult.fileId,
+        promptAudioFileId: String(uploadResult.fileId),
         promptText: promptText || '',
       }
     }

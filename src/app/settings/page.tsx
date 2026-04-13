@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { Header } from '@/components/Header'
 import useSWR from 'swr'
 import { Star } from 'lucide-react'
-import { filterValidVoiceIds } from '@/lib/voice-validator'
 
 const fetcher = (url: string) => fetch(url).then(res => res.json())
 
@@ -47,7 +46,7 @@ export default function SettingsPage() {
   const getVoiceDisplayName = (id: string) => {
     for (const group of voiceGroups) {
       const voice = group.voices.find(v => v.id === id)
-      if (voice) return `${voice.name} (${voice.language || 'Unknown'})`
+      if (voice) return `${voice.name || voice.id} (${voice.language || 'Unknown'})`
     }
     return id
   }
@@ -85,8 +84,7 @@ export default function SettingsPage() {
       newFavorites = [...favoritedIds, id]
     }
 
-    // 过滤掉无效音色后再保存
-    const validFavorites = filterValidVoiceIds(newFavorites)
+    // 服务器端会过滤无效音色
 
     setSaving(true)
     setError(null)
@@ -94,7 +92,7 @@ export default function SettingsPage() {
       await fetch('/api/user/preferences', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ favoritedVoiceIds: validFavorites }),
+        body: JSON.stringify({ favoritedVoiceIds: newFavorites }),
       })
       await mutate()
     } catch (err) {
@@ -106,16 +104,6 @@ export default function SettingsPage() {
   }
 
   const setDefault = async (id: string) => {
-    // 检查是否为有效音色
-    if (!isFavorited(id)) {
-      // 如果不是已收藏的音色，检查是否是有效音色
-      const { isValidVoiceId } = await import('@/lib/voice-validator')
-      if (!isValidVoiceId(id)) {
-        setError('该音色已不可用，请重新选择')
-        return
-      }
-    }
-
     setSaving(true)
     setError(null)
     try {
@@ -304,23 +292,19 @@ export default function SettingsPage() {
                 {currentVoices.map(voice => (
                   <div
                     key={voice.id}
-                    className={`p-4 border rounded-lg ${
-                      isFavorited(voice.id) ? 'border-yellow-500 bg-yellow-50' : ''
+                    onClick={() => toggleFavorite(voice.id)}
+                    className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                      isFavorited(voice.id) ? 'border-yellow-500 bg-yellow-50' : 'hover:bg-gray-50'
                     }`}
                   >
                     <div className="flex items-start justify-between mb-2">
-                      <button
-                        className="p-1 hover:bg-gray-100 rounded"
-                        onClick={() => toggleFavorite(voice.id)}
-                      >
-                        <Star
-                          className={`w-5 h-5 ${
-                            isFavorited(voice.id)
-                              ? 'text-yellow-500 fill-yellow-500'
-                              : 'text-gray-400'
-                          }`}
-                        />
-                      </button>
+                      <Star
+                        className={`w-5 h-5 ${
+                          isFavorited(voice.id)
+                            ? 'text-yellow-500 fill-yellow-500'
+                            : 'text-gray-400'
+                        }`}
+                      />
                       {defaultVoiceId === voice.id && (
                         <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded">默认</span>
                       )}

@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import useSWR from 'swr'
 import { VoiceCard } from '@/components/VoiceCard'
+import { VoiceTable } from '@/components/VoiceTable'
 import { AudioPlayer } from '@/components/AudioPlayer'
 import { VoiceAsset } from '@/types'
 import { Header } from '@/components/Header'
 import { Search, Filter } from 'lucide-react'
+import { Grid3X3, List } from 'lucide-react'
 
 const fetcher = (url: string) => fetch(url).then((res) => {
   if (!res.ok) throw new Error('Failed to fetch voices')
@@ -20,6 +22,14 @@ export default function VoicesPage() {
   const [playingUrl, setPlayingUrl] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState<VoiceType>('all')
+  const [viewMode, setViewMode] = useState<'card' | 'grid'>('card')
+  const [currentPage, setCurrentPage] = useState(1)
+  const PAGE_SIZE = 10
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, typeFilter])
 
   const handlePlay = (audioUrl: string) => {
     setPlayingUrl(audioUrl)
@@ -54,6 +64,13 @@ export default function VoicesPage() {
       return matchesSearch && matchesType
     })
   }, [voices, searchQuery, typeFilter])
+
+  // 分页计算
+  const totalPages = Math.ceil(filteredVoices.length / PAGE_SIZE)
+  const paginatedVoices = filteredVoices.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  )
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -94,11 +111,60 @@ export default function VoicesPage() {
           </div>
         </div>
 
-        {/* Stats */}
+        {/* Stats + View Toggle + Pagination */}
         {voices && (
-          <div className="text-sm text-gray-500 mb-4">
-            共 {filteredVoices.length} 个声音
-            {filteredVoices.length !== voices.length && `（筛选自 ${voices.length} 个）`}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div className="text-sm text-gray-500">
+              共 {filteredVoices.length} 个声音
+              {filteredVoices.length !== voices.length && `（筛选自 ${voices.length} 个）`}
+              {viewMode === 'grid' && `，第 ${currentPage} / ${totalPages} 页`}
+            </div>
+            <div className="flex items-center gap-3">
+              {/* View Toggle */}
+              <div className="flex items-center border rounded overflow-hidden">
+                <button
+                  onClick={() => setViewMode('card')}
+                  className={`px-3 py-1.5 text-sm flex items-center gap-1.5 ${
+                    viewMode === 'card' ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Grid3X3 className="w-4 h-4" />
+                  卡片
+                </button>
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`px-3 py-1.5 text-sm flex items-center gap-1.5 ${
+                    viewMode === 'grid' ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <List className="w-4 h-4" />
+                  表格
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {viewMode === 'grid' && !isLoading && !error && totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 text-sm border rounded disabled:opacity-50 hover:bg-gray-50"
+            >
+              上一页
+            </button>
+            <span className="text-sm text-gray-600">
+              {currentPage} / {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1.5 text-sm border rounded disabled:opacity-50 hover:bg-gray-50"
+            >
+              下一页
+            </button>
           </div>
         )}
 
@@ -127,18 +193,28 @@ export default function VoicesPage() {
           </div>
         )}
 
-        {/* Grid */}
+        {/* Content - Card or Table View */}
         {!isLoading && !error && filteredVoices.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredVoices.map((voice) => (
-              <VoiceCard
-                key={voice.id}
-                voice={voice}
-                onPlay={handlePlay}
-                onDelete={handleDelete}
-              />
-            ))}
-          </div>
+          viewMode === 'card' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredVoices.map((voice) => (
+                <VoiceCard
+                  key={voice.id}
+                  voice={voice}
+                  onPlay={handlePlay}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </div>
+          ) : (
+            <VoiceTable
+              voices={paginatedVoices}
+              currentPage={currentPage}
+              pageSize={PAGE_SIZE}
+              onPlay={handlePlay}
+              onDelete={handleDelete}
+            />
+          )
         )}
 
         {/* Audio Player */}

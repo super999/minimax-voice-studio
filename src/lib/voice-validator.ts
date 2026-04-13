@@ -1,10 +1,10 @@
-import { getVoiceById } from '@/config/voices'
+import { isValidVoiceId as dynamicIsValid } from './voices'
 
 /**
- * 检查 voiceId 是否为有效音色（存在于配置中）
+ * 检查 voiceId 是否为有效音色（存在于动态配置中）
  */
 export function isValidVoiceId(voiceId: string): boolean {
-  return getVoiceById(voiceId) !== undefined
+  return dynamicIsValid(voiceId)
 }
 
 /**
