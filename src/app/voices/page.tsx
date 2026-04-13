@@ -19,12 +19,31 @@ type VoiceType = 'all' | VoiceAsset['type']
 
 export default function VoicesPage() {
   const { data: voices, error, isLoading, mutate } = useSWR<VoiceAsset[]>('/api/voices', fetcher)
+  const { data: voiceConfigData } = useSWR('/api/voices-config', fetcher)
   const [playingUrl, setPlayingUrl] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState<VoiceType>('all')
-  const [viewMode, setViewMode] = useState<'card' | 'grid'>('card')
+  const [viewMode, setViewMode] = useState<'card' | 'grid'>('grid')
   const [currentPage, setCurrentPage] = useState(1)
   const PAGE_SIZE = 10
+
+  // Build voice name map from dynamic voice config
+  const voiceNameMap = useMemo(() => {
+    const map = new Map<string, string>()
+    const voiceGroups = voiceConfigData?.voices || []
+    for (const group of voiceGroups) {
+      for (const voice of group.voices) {
+        map.set(voice.id, voice.name)
+      }
+    }
+    return map
+  }, [voiceConfigData])
+
+  // Get display name for a voice ID
+  const getVoiceDisplayName = (voiceId: string) => {
+    const name = voiceNameMap.get(voiceId)
+    return name || voiceId
+  }
 
   // Reset page when filters change
   useEffect(() => {
@@ -213,6 +232,7 @@ export default function VoicesPage() {
               pageSize={PAGE_SIZE}
               onPlay={handlePlay}
               onDelete={handleDelete}
+              getVoiceDisplayName={getVoiceDisplayName}
             />
           )
         )}

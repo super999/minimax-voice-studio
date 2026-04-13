@@ -60,6 +60,7 @@ export default function TTSPage() {
   const [copiedId, setCopiedId] = useState<number | null>(null)
   const [generatePrompt, setGeneratePrompt] = useState('')
   const [generating, setGenerating] = useState(false)
+  const [selectedModel, setSelectedModel] = useState('MiniMax-M2.7')
 
   const handleCopy = async (id: number, textToCopy: string) => {
     try {
@@ -79,24 +80,29 @@ export default function TTSPage() {
     }
   }
 
-  // Simple template-based text generator
-  const generateText = async () => {
+  // Generate text using AI
+  const handleGenerateText = async () => {
     if (!generatePrompt.trim()) return
     setGenerating(true)
+    setError(null)
 
-    // Simple template-based generation
-    const templates = [
-      `关于「${generatePrompt}」的介绍。这是一个重要的话题，有很多值得探讨的内容。${generatePrompt}在我们的生活中扮演着重要的角色。`,
-      `今天我们来聊聊${generatePrompt}。相信很多人都对${generatePrompt}感兴趣，让我们一起来了解一下吧。`,
-      `大家好，今天给大家介绍一下${generatePrompt}。${generatePrompt}是一个非常有趣的话题，让我们一起来探索其中的奥秘。`,
-    ]
+    try {
+      const res = await fetch('/api/generate-text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: generatePrompt, model: selectedModel }),
+      })
 
-    // Simulate generation delay
-    await new Promise(resolve => setTimeout(resolve, 500))
-
-    const generated = templates[Math.floor(Math.random() * templates.length)]
-    setText(prev => prev ? `${prev}\n\n${generated}` : generated)
-    setGeneratePrompt('')
+      const data = await res.json()
+      if (res.ok && data.text) {
+        setText(prev => prev ? `${prev}\n\n${data.text}` : data.text)
+        setGeneratePrompt('')
+      } else {
+        setError(data.error || '生成失败')
+      }
+    } catch {
+      setError('网络错误')
+    }
     setGenerating(false)
   }
 
@@ -336,7 +342,17 @@ export default function TTSPage() {
 
         {/* Auto Generate Section */}
         <div className="mt-6 bg-white rounded-xl shadow-sm p-6">
-          <h2 className="text-lg font-medium mb-4">AI 辅助生成</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-medium">AI 辅助生成</h2>
+            <select
+              value={selectedModel}
+              onChange={e => setSelectedModel(e.target.value)}
+              className="px-3 py-1.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            >
+              <option value="MiniMax-M2.7">MiniMax-M2.7</option>
+              <option value="MiniMax-M2.5">MiniMax-M2.5</option>
+            </select>
+          </div>
           <div className="flex gap-2">
             <input
               type="text"
@@ -344,10 +360,10 @@ export default function TTSPage() {
               onChange={e => setGeneratePrompt(e.target.value)}
               placeholder="输入主题，例如：天气预报、儿童故事、新闻播报..."
               className="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              onKeyDown={e => e.key === 'Enter' && generateText()}
+              onKeyDown={e => e.key === 'Enter' && handleGenerateText()}
             />
             <button
-              onClick={generateText}
+              onClick={handleGenerateText}
               disabled={generating || !generatePrompt.trim()}
               className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50 flex items-center gap-2"
             >

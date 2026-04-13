@@ -18,6 +18,53 @@ interface Voice {
   description?: string
 }
 
+/**
+ * Generate text using MiniMax AI model
+ */
+export async function generateText(prompt: string, model: string = 'MiniMax-M2.7'): Promise<string> {
+  const response = await fetch(`${MINIMAX_API_HOST}/v1/text/chatcompletion_v2`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${MINIMAX_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        {
+          role: 'system',
+          name: 'MiniMax AI',
+          content: '你是一个专业的语音脚本撰写助手。请根据用户的主题，生成一段适合文字转语音（TTS）的文本。生成的文本应该：\n1. 语言自然流畅，口语化\n2. 长度适中（100-300字）\n3. 内容完整，有明确的主题\n4. 不包含特殊格式或代码\n5. 直接返回文本内容，不要加引号或前缀说明',
+        },
+        {
+          role: 'user',
+          name: '用户',
+          content: `请为以下主题生成一段适合TTS的语音文本：${prompt}`,
+        },
+      ],
+    }),
+  })
+
+  if (!response.ok) {
+    const error = await response.text()
+    throw new Error(`MiniMax Text API error: ${response.status} ${error}`)
+  }
+
+  const data = await response.json()
+
+  // Check for API-level errors
+  if (data.base_resp && data.base_resp.status_code !== 0) {
+    throw new Error(`MiniMax API error: ${data.base_resp.status_msg}`)
+  }
+
+  // Extract the generated text from the response
+  if (data.choices && data.choices.length > 0) {
+    return data.choices[0].message?.content || ''
+  }
+
+  return ''
+}
+
 export async function generateTTS({
   text,
   voiceId,

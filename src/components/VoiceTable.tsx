@@ -1,8 +1,8 @@
 'use client'
 
-import { Play, Download, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { Play, Download, Trash2, Copy, Check } from 'lucide-react'
 import { VoiceAsset } from '@/types'
-import { getVoiceDisplayName } from '@/config/voices'
 import { formatDuration, formatDate } from '@/utils/format'
 
 interface VoiceTableProps {
@@ -11,15 +11,36 @@ interface VoiceTableProps {
   pageSize: number
   onPlay: (audioUrl: string) => void
   onDelete: (voiceId: number) => void
+  getVoiceDisplayName: (voiceId: string) => string
 }
 
-export function VoiceTable({ voices, currentPage, pageSize, onPlay, onDelete }: VoiceTableProps) {
+export function VoiceTable({ voices, currentPage, pageSize, onPlay, onDelete, getVoiceDisplayName }: VoiceTableProps) {
+  const [copiedId, setCopiedId] = useState<number | null>(null)
+
   const handleDownload = (voice: VoiceAsset) => {
     if (!voice.audioUrl) return
     const a = document.createElement('a')
     a.href = voice.audioUrl
     a.download = `${voice.name}.mp3`
     a.click()
+  }
+
+  const handleCopy = async (voiceId: number, text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedId(voiceId)
+      setTimeout(() => setCopiedId(null), 2000)
+    } catch {
+      // Fallback
+      const textarea = document.createElement('textarea')
+      textarea.value = text
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textarea)
+      setCopiedId(voiceId)
+      setTimeout(() => setCopiedId(null), 2000)
+    }
   }
 
   const typeLabels: Record<VoiceAsset['type'], string> = {
@@ -56,16 +77,29 @@ export function VoiceTable({ voices, currentPage, pageSize, onPlay, onDelete }: 
             const globalIndex = (currentPage - 1) * pageSize + index + 1
 
             return (
-              <tr key={voice.id} className="hover:bg-gray-50">
+              <tr key={voice.id} className="hover:bg-gray-50 group">
                 <td className="px-3 py-3 text-gray-500">{globalIndex}</td>
                 <td className="px-3 py-3 max-w-xs">
                   <div className="flex items-center gap-2">
                     <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${typeColors[voice.type]}`}>
                       {typeLabels[voice.type]}
                     </span>
-                    <span className="truncate text-gray-900" title={textContent || '-'}>
+                    <span className="truncate text-gray-900 flex-1 min-w-0" title={textContent || '-'}>
                       {textContent ? (textContent.length > 50 ? `${textContent.slice(0, 50)}...` : textContent) : '-'}
                     </span>
+                    {textContent && (
+                      <button
+                        onClick={() => handleCopy(voice.id, textContent)}
+                        className="p-1 rounded hover:bg-gray-200 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                        title="复制文字"
+                      >
+                        {copiedId === voice.id ? (
+                          <Check className="w-3.5 h-3.5 text-green-500" />
+                        ) : (
+                          <Copy className="w-3.5 h-3.5 text-gray-400" />
+                        )}
+                      </button>
+                    )}
                   </div>
                 </td>
                 <td className="px-3 py-3 text-gray-700">
