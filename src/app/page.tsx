@@ -13,25 +13,17 @@ export default async function HomePage() {
           <div className="text-2xl font-bold text-blue-600">MiniMax Voice</div>
           <div className="flex items-center gap-6">
             {isLoggedIn ? (
-              <>
+              <div className="flex items-center gap-3">
+                <span className="text-gray-700 font-medium">
+                  {session?.user?.name || session?.user?.email}
+                </span>
                 <Link
                   href="/dashboard"
-                  className="text-gray-600 hover:text-gray-900 transition-colors"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   仪表板
                 </Link>
-                <div className="flex items-center gap-3">
-                  <span className="text-gray-700 font-medium">
-                    {session?.user?.name || session?.user?.email}
-                  </span>
-                  <Link
-                    href="/dashboard"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    进入控制台
-                  </Link>
-                </div>
-              </>
+              </div>
             ) : (
               <>
                 <Link
@@ -67,7 +59,7 @@ export default async function HomePage() {
                 href="/dashboard"
                 className="px-8 py-4 bg-blue-600 text-white text-lg font-medium rounded-lg hover:bg-blue-700 transition-colors"
               >
-                进入控制台
+                仪表板
               </Link>
             ) : (
               <Link
