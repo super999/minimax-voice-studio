@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
+import { LogoutButton } from "@/components/LogoutButton";
 
 export default async function HomePage() {
   const session = await auth();
@@ -23,6 +24,7 @@ export default async function HomePage() {
                 >
                   仪表板
                 </Link>
+                <LogoutButton />
               </div>
             ) : (
               <>
