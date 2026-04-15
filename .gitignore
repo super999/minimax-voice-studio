@@ -38,3 +38,5 @@ prisma/migrations/
 
 
 public/audio/
+/docs/superpowers
+/logs/api.log
