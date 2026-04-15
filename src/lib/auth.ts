@@ -42,6 +42,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
+    authorized({ auth, request: { nextUrl } }) {
+      const isLoggedIn = !!auth?.user
+      const isOnLoginPage = nextUrl.pathname.startsWith('/auth/login')
+      const isOnRegisterPage = nextUrl.pathname.startsWith('/auth/register')
+      const isOnAuthPage = isOnLoginPage || isOnRegisterPage
+
+      if (isLoggedIn && isOnAuthPage) {
+        return Response.redirect(new URL('/dashboard', nextUrl))
+      }
+
+      if (!isLoggedIn && !isOnAuthPage) {
+        return false
+      }
+
+      return true
+    },
     jwt({ token, user }) {
       if (user) {
         token.id = user.id
