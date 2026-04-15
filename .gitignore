@@ -42,3 +42,5 @@ public/audio/
 /logs/api.log
 
 .worktrees/
+
+.package-lock.json
