@@ -10,6 +10,7 @@ const navLinks = [
   { href: '/voices', label: '我的声音' },
   { href: '/settings', label: '偏好设置' },
   { href: '/developer', label: '开发者中心' },
+  { href: '/docs', label: '文档中心' },
 ]
 
 export function Header() {
