@@ -7,7 +7,7 @@ import { VoiceTable } from '@/components/VoiceTable'
 import { AudioPlayer } from '@/components/AudioPlayer'
 import { VoiceAsset } from '@/types'
 import { Header } from '@/components/Header'
-import { Search, Filter } from 'lucide-react'
+import { Search, Filter, Download } from 'lucide-react'
 import { Grid3X3, List } from 'lucide-react'
 
 const fetcher = (url: string) => fetch(url).then((res) => {
@@ -71,6 +71,65 @@ export default function VoicesPage() {
       console.error('Delete error:', error)
       alert(error instanceof Error ? error.message : '删除失败')
     }
+  }
+
+  const handleExport = () => {
+    if (!voices || voices.length === 0) {
+      alert('没有可导出的声音资产')
+      return
+    }
+
+    const grouped = new Map<string, Array<{
+      voice_id: string
+      text: string
+      created_at: string
+      local_path: string | null
+    }>>()
+
+    for (const voice of voices) {
+      if (!voice.voiceId) continue
+
+      const metadata = voice.metadata as Record<string, unknown> | null
+      const text = (metadata?.text as string) || ''
+
+      if (!grouped.has(voice.voiceId)) {
+        grouped.set(voice.voiceId, [])
+      }
+
+      grouped.get(voice.voiceId)!.push({
+        voice_id: voice.voiceId,
+        text,
+        created_at: voice.createdAt,
+        local_path: voice.audioUrl,
+      })
+    }
+
+    const sortedGroups = Array.from(grouped.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([voiceId, assets]) => ({
+        voice_id: voiceId,
+        voice_name: getVoiceDisplayName(voiceId),
+        assets: assets.sort((a, b) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        ),
+      }))
+
+    const exportData = {
+      exported_at: new Date().toISOString(),
+      total_count: voices.length,
+      groups: sortedGroups,
+    }
+
+    const jsonStr = JSON.stringify(exportData, null, 2)
+    const blob = new Blob([jsonStr], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `voice-assets-${new Date().toISOString().slice(0, 10)}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
   }
 
   // 筛选逻辑
@@ -139,6 +198,13 @@ export default function VoicesPage() {
               {viewMode === 'grid' && `，第 ${currentPage} / ${totalPages} 页`}
             </div>
             <div className="flex items-center gap-3">
+              <button
+                onClick={handleExport}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-green-50 text-green-700 border border-green-200 rounded hover:bg-green-100 transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                导出清单
+              </button>
               {/* View Toggle */}
               <div className="flex items-center border rounded overflow-hidden">
                 <button
