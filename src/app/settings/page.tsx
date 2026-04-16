@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import { Header } from '@/components/Header'
+import { AudioPlayer } from '@/components/AudioPlayer'
 import useSWR from 'swr'
-import { Star } from 'lucide-react'
+import { Star, Search, ChevronDown, ChevronUp, Play, Volume2 } from 'lucide-react'
 
 const fetcher = (url: string) => fetch(url).then(res => res.json())
 
@@ -28,17 +29,49 @@ interface ClonedVoice {
   createdAt: string
 }
 
+interface VoiceExample {
+  filename: string
+  title: string
+  description?: string
+  text?: string
+}
+
+interface VoiceWithExamples {
+  voice_id: string
+  name: string
+  language: string
+  description?: string
+  examples: VoiceExample[]
+}
+
+interface VoiceExamplesGroup {
+  language: string
+  voices: VoiceWithExamples[]
+}
+
+interface VoiceExamplesResponse {
+  groups: VoiceExamplesGroup[]
+  total: number
+}
+
 export default function SettingsPage() {
   const { data, mutate } = useSWR('/api/user/preferences', fetcher)
   const { data: clonedVoicesData, mutate: mutateCloned } = useSWR('/api/user/cloned-voices', fetcher)
   const { data: voiceData } = useSWR<{ voices: VoiceGroup[] }>('/api/voices-config', fetcher)
+  const { data: voiceExamplesData } = useSWR<VoiceExamplesResponse>('/api/voice-examples', fetcher)
+  
   const [activeLanguage, setActiveLanguage] = useState('Mandarin')
-  const [activeTab, setActiveTab] = useState<'favorites' | 'cloned'>('favorites')
+  const [activeTab, setActiveTab] = useState<'favorites' | 'cloned' | 'examples'>('favorites')
   const [deletingId, setDeletingId] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [refreshingVoices, setRefreshingVoices] = useState(false)
   const [voiceSyncInfo, setVoiceSyncInfo] = useState<{officialCount?: number, error?: string} | null>(null)
+  
+  const [searchQuery, setSearchQuery] = useState('')
+  const [expandedVoiceIds, setExpandedVoiceIds] = useState<Set<string>>(new Set())
+  const [activeExampleLanguage, setActiveExampleLanguage] = useState<string | null>(null)
+  const [playingAudio, setPlayingAudio] = useState<string | null>(null)
 
   const voiceGroups: VoiceGroup[] = voiceData?.voices || []
 
@@ -136,6 +169,41 @@ export default function SettingsPage() {
   const currentGroup = voiceGroups.find(g => g.language === activeLanguage)
   const currentVoices = currentGroup?.voices || []
 
+  const exampleGroups: VoiceExamplesGroup[] = voiceExamplesData?.groups || []
+
+  const toggleExpand = (voiceId: string) => {
+    const newExpanded = new Set(expandedVoiceIds)
+    if (newExpanded.has(voiceId)) {
+      newExpanded.delete(voiceId)
+    } else {
+      newExpanded.add(voiceId)
+    }
+    setExpandedVoiceIds(newExpanded)
+  }
+
+  const isExpanded = (voiceId: string) => expandedVoiceIds.has(voiceId)
+
+  const playExample = (voiceId: string, filename: string) => {
+    const audioUrl = `/api/voice-examples/${encodeURIComponent(voiceId)}/${encodeURIComponent(filename)}`
+    setPlayingAudio(audioUrl)
+  }
+
+  const filteredExampleGroups = exampleGroups.map(group => ({
+    ...group,
+    voices: group.voices.filter(voice => {
+      if (!searchQuery.trim()) return true
+      const query = searchQuery.toLowerCase()
+      return (
+        voice.name.toLowerCase().includes(query) ||
+        voice.voice_id.toLowerCase().includes(query)
+      )
+    })
+  })).filter(group => group.voices.length > 0)
+
+  const displayGroups = activeExampleLanguage
+    ? filteredExampleGroups.filter(g => g.language === activeExampleLanguage)
+    : filteredExampleGroups
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -163,6 +231,16 @@ export default function SettingsPage() {
             }`}
           >
             克隆音色
+          </button>
+          <button
+            onClick={() => setActiveTab('examples')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${
+              activeTab === 'examples'
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            音色预览
           </button>
         </div>
 
@@ -360,7 +438,165 @@ export default function SettingsPage() {
             </p>
           </div>
         )}
+
+        {activeTab === 'examples' && (
+          <div>
+            <h2 className="text-lg font-medium mb-4">🎵 音色预览</h2>
+            <p className="text-sm text-gray-500 mb-4">
+              浏览并试听各种音色的样例音频，帮助您选择最适合的音色
+            </p>
+
+            {/* Search Bar */}
+            <div className="relative mb-6">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="搜索音色名称或 voice_id..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* Language Tabs */}
+            {filteredExampleGroups.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-6">
+                <button
+                  onClick={() => setActiveExampleLanguage(null)}
+                  className={`px-3 py-1 rounded-lg text-sm ${
+                    activeExampleLanguage === null
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
+                >
+                  全部 ({voiceExamplesData?.total || 0})
+                </button>
+                {filteredExampleGroups.map((group) => (
+                  <button
+                    key={group.language}
+                    onClick={() => setActiveExampleLanguage(group.language)}
+                    className={`px-3 py-1 rounded-lg text-sm ${
+                      activeExampleLanguage === group.language
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-100 hover:bg-gray-200'
+                    }`}
+                  >
+                    {group.language} ({group.voices.length})
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Voice Examples List */}
+            {displayGroups.length === 0 ? (
+              <div className="text-center py-12 text-gray-400 text-sm">
+                {searchQuery ? '没有找到匹配的音色' : '暂无音色预览数据'}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {displayGroups.map((group) => (
+                  <div key={group.language}>
+                    <h3 className="text-sm font-medium text-gray-600 mb-3 flex items-center gap-2">
+                      <Volume2 className="w-4 h-4" />
+                      {group.language} 音色
+                    </h3>
+                    <div className="space-y-2">
+                      {group.voices.map((voice) => (
+                        <div
+                          key={voice.voice_id}
+                          className="bg-white rounded-lg border overflow-hidden"
+                        >
+                          {/* Voice Header */}
+                          <div
+                            className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50"
+                            onClick={() => toggleExpand(voice.voice_id)}
+                          >
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-gray-900">
+                                  {voice.name}
+                                </span>
+                                <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded">
+                                  {voice.examples.length} 个样例
+                                </span>
+                              </div>
+                              <p className="text-xs font-mono text-gray-500 mt-1">
+                                {voice.voice_id}
+                              </p>
+                              {voice.description && (
+                                <p className="text-xs text-gray-600 mt-1 line-clamp-1">
+                                  {voice.description}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {isExpanded(voice.voice_id) ? (
+                                <ChevronUp className="w-5 h-5 text-gray-400" />
+                              ) : (
+                                <ChevronDown className="w-5 h-5 text-gray-400" />
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Examples List (Expanded) */}
+                          {isExpanded(voice.voice_id) && (
+                            <div className="border-t bg-gray-50 p-4">
+                              <div className="space-y-3">
+                                {voice.examples.map((example, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="flex items-center justify-between p-3 bg-white rounded-lg border"
+                                  >
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-sm font-medium text-gray-900">
+                                          {example.title}
+                                        </span>
+                                      </div>
+                                      {example.description && (
+                                        <p className="text-xs text-gray-500 mt-1">
+                                          {example.description}
+                                        </p>
+                                      )}
+                                      {example.text && (
+                                        <p className="text-xs text-gray-600 mt-1 italic line-clamp-2">
+                                          "{example.text}"
+                                        </p>
+                                      )}
+                                    </div>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        playExample(voice.voice_id, example.filename)
+                                      }}
+                                      className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors flex-shrink-0"
+                                    >
+                                      <Play className="w-4 h-4" />
+                                      播放
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </main>
+
+      {/* Audio Player */}
+      {playingAudio && (
+        <AudioPlayer
+          src={playingAudio}
+          onClose={() => setPlayingAudio(null)}
+        />
+      )}
     </div>
   )
 }

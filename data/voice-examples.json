@@ -1,0 +1,53 @@
+[
+  {
+    "voice_id": "cute_boy",
+    "examples": [
+      {
+        "filename": "children_story.mp3",
+        "title": "儿童故事",
+        "description": "适合儿童故事类内容",
+        "text": "从前有座山，山里有座庙，庙里有个老和尚在给小和尚讲故事。"
+      },
+      {
+        "filename": "funny_joke.mp3",
+        "title": "搞笑笑话",
+        "description": "适合搞笑类内容",
+        "text": "为什么鸡过马路？因为它想去对面！"
+      }
+    ]
+  },
+  {
+    "voice_id": "Robot_Armor",
+    "examples": [
+      {
+        "filename": "tactical_command.mp3",
+        "title": "战术指令",
+        "text": "威胁确认，战术协议激活，执行。"
+      },
+      {
+        "filename": "system_alert.mp3",
+        "title": "系统警报",
+        "text": "系统异常，立即检查并修复。"
+      },{
+        "filename": "greeting.mp3",
+        "title": "问候语",
+        "text": "你好，我是独游AI匠，欢迎来到我的世界。(laughs)"
+      }
+    ]
+  },
+  {
+    "voice_id": "Chinese (Mandarin)_Humorous_Elder",
+    "examples": [
+      {
+        "filename": "pre_battle_mobilization.mp3",
+        "title": "战前动员",
+        "text": "将士们！听我号令！操立于高坡之上，眺望远方敌军阵型，只见曹军大旗迎风飘扬，战鼓隆隆作响。身后十万精兵严阵以待，铁甲在阳光下闪着寒光。左边夏侯惇、右边张辽，身后许褚护卫。曹操手持倚天剑，一声令下：“传我命令，全军突袭！”"
+      },
+      {
+        "filename": "battle_command.mp3",
+        "title": "战斗号令",
+        "text": "众将听令！今日一战，我军必当势如破竹，直捣敌营！曹仁、夏侯渊，你二人率领左翼骑兵，从侧翼包抄，截断敌军退路！许褚、典韦，你二人率虎卫军为先锋，逢山开路，遇水搭桥，遇敌便杀！传我将令，全军将士，随我冲锋！今日若胜，必与诸位共享荣华！若退后者，斩！杀！给我冲！全军听令，随我杀！踏平敌阵！曹军将士，随我冲！杀！一个不留！今日就是破敌之日！全军出击！踏平敌营！杀！"
+      }
+    ]
+  }
+]
