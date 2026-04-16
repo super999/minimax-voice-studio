@@ -173,6 +173,106 @@ export async function cloneVoice({
   return { voiceId: data.voice_id }
 }
 
+interface GenerateMetadataOptions {
+  text: string
+  voiceId: string
+  systemPromptTemplate?: string
+  userPromptTemplate?: string
+  model?: string
+}
+
+interface GeneratedMetadata {
+  filename: string
+  title: string
+  description: string
+}
+
+export async function generateMetadata({
+  text,
+  voiceId,
+  systemPromptTemplate,
+  userPromptTemplate,
+  model = 'MiniMax-M2.7',
+}: GenerateMetadataOptions): Promise<GeneratedMetadata> {
+  const defaultSystemPrompt = `你是一个专业的元数据生成助手。请根据用户提供的语音文本内容和语音ID，生成适合的元数据信息。
+你需要返回一个严格的 JSON 格式对象，包含以下三个字段：
+1. filename: 英文文件名，使用下划线分隔，以 .mp3 结尾，例如 "funny_joke.mp3"
+2. title: 中文标题，简洁明了，概括内容主题
+3. description: 中文描述，说明这段语音适合什么场景或内容类型
+
+重要规则：
+- 只返回 JSON 对象，不要有任何其他文字说明
+- filename 必须是英文，使用下划线分隔
+- title 和 description 必须是中文
+- 确保 JSON 格式正确，使用双引号`
+
+  const defaultUserPrompt = `请根据以下信息生成元数据：
+语音文本内容：
+{text}
+
+语音ID：{voiceId}`
+
+  const systemPrompt = systemPromptTemplate || defaultSystemPrompt
+  const userPrompt = userPromptTemplate
+    ? userPromptTemplate.replace('{text}', text).replace('{voiceId}', voiceId)
+    : defaultUserPrompt.replace('{text}', text).replace('{voiceId}', voiceId)
+
+  const response = await fetch(`${MINIMAX_API_HOST}/v1/text/chatcompletion_v2`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${MINIMAX_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        {
+          role: 'system',
+          name: 'MiniMax AI',
+          content: systemPrompt,
+        },
+        {
+          role: 'user',
+          name: '用户',
+          content: userPrompt,
+        },
+      ],
+    }),
+  })
+
+  if (!response.ok) {
+    const error = await response.text()
+    throw new Error(`MiniMax Text API error: ${response.status} ${error}`)
+  }
+
+  const data = await response.json()
+
+  if (data.base_resp && data.base_resp.status_code !== 0) {
+    throw new Error(`MiniMax API error: ${data.base_resp.status_msg}`)
+  }
+
+  let content = ''
+  if (data.choices && data.choices.length > 0) {
+    content = data.choices[0].message?.content || ''
+  }
+
+  const jsonMatch = content.match(/\{[\s\S]*\}/)
+  if (jsonMatch) {
+    try {
+      const parsed = JSON.parse(jsonMatch[0])
+      return {
+        filename: parsed.filename || 'unknown.mp3',
+        title: parsed.title || '未命名',
+        description: parsed.description || '',
+      }
+    } catch {
+      throw new Error('Failed to parse generated metadata as JSON')
+    }
+  }
+
+  throw new Error('No valid JSON metadata found in response')
+}
+
 export async function listVoices(): Promise<Voice[]> {
   const response = await fetch(`${MINIMAX_API_HOST}/v1/get_voice`, {
     method: 'POST',

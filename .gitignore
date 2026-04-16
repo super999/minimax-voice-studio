@@ -44,3 +44,4 @@ public/audio/
 .worktrees/
 
 .package-lock.json
+/package-lock.json

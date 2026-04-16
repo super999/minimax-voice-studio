@@ -21,6 +21,14 @@ export default function DeveloperPage() {
             <div className="font-medium text-gray-900 text-lg mb-2">API 密钥管理</div>
             <div className="text-sm text-gray-500">创建、管理和撤销 API 密钥</div>
           </Link>
+
+          <Link
+            href="/developer/tools"
+            className="bg-white rounded-lg border border-gray-200 p-6 hover:border-purple-500 hover:bg-purple-50 transition-colors"
+          >
+            <div className="font-medium text-gray-900 text-lg mb-2">开发工具调试</div>
+            <div className="text-sm text-gray-500">AI 元数据生成 - 根据文本和 Voice ID 生成 filename、title、description</div>
+          </Link>
         </div>
       </main>
     </div>
